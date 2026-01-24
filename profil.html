@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#2563eb">
+<link rel="icon" href="/ikon-512.png">
+<title>Profil</title>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<style>
+  /*ROOT : LIGHT (MODERN CLEAN)*/
+  :root{
+    --primary:#2563eb;
+    --primary-soft:#dbeafe;
+    --bg:#f8fafc;
+    --card:#ffffff;
+    --text:#0f172a;
+    --muted:#64748b;
+    --danger:#ef4444;
+    --border:#e5e7eb;
+  
+    --radius:18px;
+    --blur:12px;
+    --glow:none;
+  }
+
+/*BASE + THEME TRANSITION ENGINE*/
+ *{box-sizing:border-box}
+  body{
+   transition:background .25s ease,color .25s ease;
+  }
+
+  .card,
+  .popup,
+  .stats-card,
+  .navbar{
+    transition:background .25s ease,border .25s ease,box-shadow .25s ease;
+  }
+  .avatar,
+  .gallery img{
+    transition:transform .25s ease;
+  }
+  
+  body{
+    margin:0;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    background:var(--bg);
+    color: var(--text);
+    padding-bottom: 130px; /* ruang untuk navbar */
+  }
+
+  /*THEME : DARK (ELEGANT / SOFT)*/
+  body.theme-dark{
+    --bg:#0b1220;
+    --card:#0f172a;
+    --text:#e5e7eb;
+    --muted:#94a3b8;
+    --primary:#60a5fa;
+    --primary-soft:#1e293b;
+    --border:#1e293b;
+    --glow:none;
+  }
+  
+  body.theme-dark .header{
+    background:linear-gradient(135deg,#020617,#020617);
+  }
+
+  /*THEME : FUTURISTIC (NEON GLASS)*/
+  body.theme-future{
+    --bg:radial-gradient(circle at top,#0b0f1a,#020617);
+    --card:rgba(15,23,42,.65);
+    --text:#e0f2fe;
+    --muted:#7dd3fc;
+    --primary:#22d3ee;
+    --primary-soft:rgba(34,211,238,.12);
+    --danger:#fb7185;
+    --border:rgba(34,211,238,.35);
+    --glow:0 0 12px rgba(34,211,238,.45), 0 0 28px rgba(34,211,238,.25);
+
+  .animation:futureFade .35s ease;
+  }
+
+  @keyframes futureFade{
+    from{
+      filter:brightness(.85) saturate(.8);
+    }
+    to{
+      filter:brightness(1) saturate(1);
+    }
+  }
+
+  /* ======================================================
+     HEADER
+  ====================================================== */
+  .header{
+    height:190px;
+    background:linear-gradient(135deg,var(--primary),#1d4ed8);
+    border-bottom-left-radius:28px;
+    border-bottom-right-radius:28px;
+    position:relative;
+    z-index:1;
+  }
+  
+  body.theme-future .header{
+    background:
+      radial-gradient(circle at top,
+        rgba(34,211,238,.35),
+        transparent 60%),
+      linear-gradient(135deg,#020617,#020617);
+    box-shadow:var(--glow);
+  }
+  
+  /* ======================================================
+     SETTINGS BUTTON
+  ====================================================== */
+  .settings-btn{
+    position:absolute;
+    top:16px;
+    right:16px;
+    width:42px;
+    height:42px;
+    border-radius:50%;
+    border:1px solid rgba(255,255,255,.25);
+    background:rgba(255,255,255,.25);
+    color:#fff;
+    font-size:18px;
+    cursor:pointer;
+  }
+  
+  /* ======================================================
+     POPUP THEME SELECTOR
+  ====================================================== */
+  .popup{
+    position:fixed;
+    top:64px;
+    right:16px;
+    width:230px;
+    padding:12px;
+    background:var(--card);
+    border-radius:16px;
+    border:1px solid var(--border);
+    box-shadow:0 20px 50px rgba(0,0,0,.35), var(--glow);
+    transform:scale(.95);
+    opacity:0;
+    pointer-events:none;
+    transition:.25s ease;
+    z-index:9999;
+    backdrop-filter:blur(var(--blur));
+  }
+  .popup.show{
+    transform:scale(1);
+    opacity:1;
+    pointer-events:auto;
+  }
+  .popup button{
+    width:100%;
+    padding:12px;
+    border-radius:12px;
+    border:1px solid var(--border);
+    background:var(--primary-soft);
+    color:var(--text);
+    font-size:14px;
+    margin-bottom:8px;
+  }
+  .popup button:last-child{margin-bottom:0}
+  .popup button:hover{
+    box-shadow:var(--glow);
+  }
+  
+  /* ======================================================
+     OVERLAY
+  ====================================================== */
+  .overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.35);
+    backdrop-filter:blur(6px);
+    z-index:9998;
+    opacity:0;
+    pointer-events:none;
+    transition:.2s;
+  }
+  .overlay.show{
+    opacity:1;
+    pointer-events:auto;
+  }
+  
+  /* ======================================================
+     CARD GLOBAL
+  ====================================================== */
+  .card {
+    background:var(--card);
+    border-radius:var(--radius);
+    padding:16px;
+    border:1px solid var(--border);
+    box-shadow:0 12px 28px rgba(0,0,0,.08), var(--glow);
+    backdrop-filter:blur(var(--blur));
+  }
+  
+  /* ======================================================
+     PROFILE SUMMARY
+  ====================================================== */
+  .profile-summary{
+    margin:-80px 16px 16px;
+    text-align:center;
+    position:relative;
+    z-index:5;
+  }
+  
+  .avatar{
+    width:96px;
+    height:96px;
+    border-radius:50%;
+    margin:-64px auto 10px;
+    border:4px solid var(--card);
+    background:#c7d2fe;
+    box-shadow:var(--glow);
+  }
+  
+  .name{
+    font-size:18px;
+    font-weight:700;
+  }
+  
+  /* ======================================================
+     STATS MINI CARD
+  ====================================================== */
+  .stats-card{
+    margin-top:14px;
+    background:var(--primary-soft);
+    border-radius:16px;
+    padding:12px 8px;
+    display:flex;
+    justify-content:space-around;
+  }
+  
+  .stats-card .stat{
+    flex:1;
+    text-align:center;
+  }
+  .stats-card b{
+    font-size:18px;
+    color:var(--primary);
+  }
+  .stats-card small{
+    font-size:12px;
+    color:var(--muted);
+  }
+  .stats-card .divider{
+    width:1px;
+    height:36px;
+    background:var(--border);
+  }
+  
+  /* ======================================================
+     PROFILE DETAIL
+  ====================================================== */
+  .profile-detail{
+    margin:0 16px;
+  }
+  .row{
+    display:flex;
+    justify-content:space-between;
+    padding:10px 0;
+    border-bottom:1px solid var(--border);
+  }
+  .row:last-child{border-bottom:none}
+  .label{font-size:13px;color:var(--muted)}
+  .value{font-weight:600}
+  
+  /* ======================================================
+     GALLERY
+  ====================================================== */
+  .gallery-card{
+    margin:16px;
+  }
+  .gallery{
+    display:flex;
+    gap:12px;
+    overflow-x:auto;
+    scroll-snap-type:x mandatory;
+  }
+  .gallery::-webkit-scrollbar{display:none}
+  .gallery img{
+    flex:0 0 80%;
+    height:200px;
+    border-radius:16px;
+    object-fit:cover;
+    scroll-snap-align:start;
+    box-shadow:0 8px 20px rgba(0,0,0,.25);
+  }
+  /* ======================================================
+     STATUS
+  ====================================================== */
+  .loading{
+    text-align:center;
+    color:var(--muted);
+    margin-top:30px;
+  }
+  .error{
+    background:#fee2e2;
+    color:#991b1b;
+    padding:12px;
+    border-radius:12px;
+    margin:16px;
+  }
+  /* overlay blur */
+  .overlay{
+    position: fixed;
+    inset: 0;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(6px);
+    background: rgba(0,0,0,0.35);
+    z-index: 9999;
+  }
+  
+  /* popup show */
+  .overlay.show .popup{
+    transform: scale(1);
+    opacity: 1;
+  }
+  
+  /* icon */
+  .popup-icon{
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.25);
+  }
+  
+  /* title */
+  .popup-title{
+    margin-top: 12px;
+    font-weight: 700;
+    font-size: 18px;
+  }
+  
+  /* desc */
+  .popup-desc{
+    margin-top: 6px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.6);
+  }
+  
+  /* button */
+  .popup-btn{
+    margin-top: 14px;
+    width: 100%;
+    padding: 12px;
+    border-radius: 14px;
+    border: none;
+    background: linear-gradient(135deg, #0041cd, #1d4ed8);
+    color: #fff;
+    font-weight: 700;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .btn-icon{
+    width: 20px;
+    height: 20px;
+  }
+
+  /* ======================================================
+     BOTTOM NAVBAR
+  ====================================================== */
+  .navbar{
+    position:fixed;
+    bottom:14px;
+    left:14px;
+    right:14px;
+    height:70px;
+    background:var(--card);
+    border-radius:24px;
+    border:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 12px;
+    box-shadow:
+      0 14px 40px rgba(0,0,0,.25),
+      var(--glow);
+    backdrop-filter:blur(var(--blur));
+    z-index:999;
+  }
+  
+  /* ITEM */
+  .nav-item{
+    flex:1;
+    text-align:center;
+    text-decoration:none;
+    color:var(--muted);
+    font-size:11px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+    transition:.25s ease;
+  }
+
+  .nav-item svg{
+    width:22px;
+    height:22px;
+    fill:currentColor;
+  }
+  
+  /* ACTIVE */
+  .nav-item.active{
+    color:var(--primary);
+  }
+  
+  .nav-item.active svg{
+    filter:drop-shadow(0 0 6px rgba(0,0,0,.2));
+  }
+  
+  /* ======================================================
+     WHATSAPP SPECIAL BUTTON
+  ====================================================== */
+  .nav-wa{
+    width:64px;
+    height:64px;
+    margin-top:-34px;
+    background:linear-gradient(135deg,#22c55e,#16a34a);
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:
+      0 14px 40px rgba(34,197,94,.6),
+      var(--glow);
+    border:4px solid var(--card);
+  }
+  
+  .nav-wa img{
+    width:34px;
+    height:34px;
+    border-radius:50%;
+  }
+  /* ===============================
+     NAVBAR PROFILE AVATAR
+  ================================ */
+  .nav-avatar{
+    width:26px;
+    height:26px;
+    border-radius:50%;
+    background:#e5e7eb;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    border:2px solid var(--card);
+  }
+  
+  .nav-avatar img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+  }
+  
+  .nav-avatar-icon{
+    width:18px;
+    height:18px;
+    fill:currentColor;
+  }
+  
+  /* ACTIVE STATE */
+  .nav-item.active .nav-avatar{
+    box-shadow:
+      0 0 0 2px var(--primary),
+      var(--glow);
+  }
+  /* ===============================
+     NAVBAR AUTO HIDE ON SCROLL
+  ================================ */
+  .navbar{
+    transition:
+      transform .35s cubic-bezier(.4,0,.2,1),
+      opacity .25s ease;
+  }
+  
+  /* HIDDEN STATE */
+  .navbar.hide{
+    transform: translateY(120%);
+    opacity: 0;
+  }
+  
+  /* FUTURISTIC BOOST */
+  body.theme-future .nav-wa{
+    box-shadow:
+      0 0 18px rgba(34,197,94,.8),
+      0 0 40px rgba(34,197,94,.6);
+  }
+    /* ======================================
+     GLOBAL CLICK FEEDBACK (PRESS EFFECT)
+     Berlaku untuk SEMUA tombol & navbar
+  ====================================== */
+  
+  /* Matikan hover bawaan */
+  button:hover,
+  a:hover {
+    box-shadow: none !important;
+    filter: none !important;
+  }
+  
+  /* Semua elemen interaktif */
+  button,
+  .nav-item,
+  .nav-wa,
+  .settings-btn,
+  .popup button,
+  .logout {
+    cursor: pointer;
+    transition:
+      transform 0.12s ease,
+      box-shadow 0.12s ease;
+  }
+  
+  /* Efek TIMBUL SAAT DIKLIK */
+  button:active,
+  .nav-item:active,
+  .nav-wa:active,
+  .settings-btn:active,
+  .popup button:active,
+  .logout:active {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow:
+      0 6px 14px rgba(0,0,0,.25),
+      var(--glow);
+  }
+  
+  /* Setelah klik → balik normal otomatis */
+  button,
+  .nav-item,
+  .nav-wa {
+    will-change: transform;
+  }
+  .modalBtn{
+    display:flex;
+    align-items:center;   /* ini bikin icon + teks sejajar tengah */
+    justify-content:flex-start;
+    gap:10px;             /* jarak icon dan teks */
+  }
+  
+  .modalBtn svg{
+    width:18px;
+    height:18px;
+    display:block;        /* penting supaya tidak naik */
+  }
+  /* ======================================
+   DISABLE TEXT SELECTION (GLOBAL)
+====================================== */
+  * {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  /* ======================================================
+     FOOTER
+  ====================================================== */
+  .footer{
+    margin:40px 16px 5px;
+    padding:20px 16px;
+    text-align:center;
+    background:var(--card);
+    border-radius:20px;
+    border:1px solid var(--border);
+    box-shadow:0 10px 30px rgba(0,0,0,.15), var(--glow);
+  }
+  
+  .footer-title{
+    font-size:14px;
+    font-weight:600;
+    color:var(--muted);
+    margin-bottom:14px;
+  }
+  
+  /* ICON ROW */
+  .footer-social{
+    display:flex;
+    justify-content:center;
+    gap:14px;
+    margin-bottom:16px;
+  }
+  
+  /* BUTTON */
+  .social-btn{
+    width:44px;
+    height:44px;
+    border-radius:50%;
+    background:var(--primary-soft);
+    color:var(--primary);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:.25s ease;
+  }
+  
+  .social-btn svg{
+    width:20px;
+    height:20px;
+    fill:currentColor; /* PENTING */
+  }
+  
+  /* INTERAKSI */
+  .social-btn:hover{
+    transform:translateY(-2px);
+    box-shadow:0 8px 20px rgba(0,0,0,.25), var(--glow);
+  }
+  
+  .social-btn:active{
+    transform:scale(.95);
+  }
+  
+  /* COPYRIGHT */
+  .footer-copy{
+    font-size:12px;
+    color:var(--muted);
+  }
+</style>
+</head>
+
+<body>
+  <div class="header">
+    <button class="settings-btn" onclick="togglePopup()">⚙️</button>
+  </div>
+  
+  <div id="overlay" class="overlay" onclick="togglePopup()"></div>
+  
+  <div id="popup" class="popup">
+    <button onclick="setTheme('light')" class="modalBtn">
+      <svg height="800px" width="800px" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+      	 viewBox="0 0 512 512" xml:space="preserve">
+      <circle style="fill:#273B7A;" cx="256" cy="256" r="256"/>
+      <g>
+      	<path style="fill:#121149;" d="M369.778,145.954l-28.634,31.992l-76.738-77.991l-2.61,39.986l-14.217,14.65l58.652,58.651
+      		L194.22,288.525l-37.104-37.105L99.63,264.044l70.944,70.944l-27.331,33.77l141.614,141.614
+      		c117.817-13.219,211.435-106.389,225.342-223.997L369.778,145.954z"/>
+      	<polyline style="fill:#121149;" points="164.983,182.05 239.997,257.064 243.933,264.045 266.831,249.766 175.087,158.022 	"/>
+      </g>
+      <circle style="fill:#FFC61B;" cx="256" cy="256" r="78.041"/>
+      <path style="fill:#EAA22F;" d="M403.394,268.067h-37.348c-6.665,0-12.067-5.403-12.067-12.067c0-6.665,5.403-12.067,12.067-12.067
+      	h37.348c6.665,0,12.067,5.403,12.067,12.067C415.461,262.665,410.059,268.067,403.394,268.067z"/>
+      <g>
+      	<path style="fill:#FFC61B;" d="M145.954,268.067h-37.348c-6.665,0-12.067-5.403-12.067-12.067c0-6.665,5.403-12.067,12.067-12.067
+      		h37.348c6.665,0,12.067,5.403,12.067,12.067C158.022,262.665,152.619,268.067,145.954,268.067z"/>
+      	<path style="fill:#FFC61B;" d="M256,415.461c-6.665,0-12.067-5.403-12.067-12.067v-37.348c0-6.665,5.403-12.067,12.067-12.067
+      		c6.665,0,12.067,5.403,12.067,12.067v37.348C268.067,410.059,262.665,415.461,256,415.461z"/>
+      	<path style="fill:#FFC61B;" d="M256,158.022c-6.665,0-12.067-5.403-12.067-12.067v-37.348c0-6.665,5.403-12.067,12.067-12.067
+      		c6.665,0,12.067,5.403,12.067,12.067v37.348C268.067,152.619,262.665,158.022,256,158.022z"/>
+      </g>
+      <g>
+      	<path style="fill:#EAA22F;" d="M334.033,256c0-42.999-34.782-77.869-77.745-78.024v156.05
+      		C299.251,333.869,334.033,298.999,334.033,256z"/>
+      	<path style="fill:#EAA22F;" d="M256.288,353.992v61.454c6.53-0.155,11.779-5.485,11.779-12.054v-37.348
+      		C268.067,359.477,262.818,354.147,256.288,353.992z"/>
+      	<path style="fill:#EAA22F;" d="M256.288,96.553v61.454c6.53-0.155,11.779-5.485,11.779-12.054v-37.347
+      		C268.067,102.038,262.818,96.708,256.288,96.553z"/>
+      	<path style="fill:#EAA22F;" d="M360.224,372.291c-3.088,0-6.177-1.179-8.532-3.534l-26.41-26.409
+      		c-4.713-4.711-4.713-12.354-0.002-17.065c4.713-4.713,12.355-4.711,17.065-0.002l26.41,26.409
+      		c4.713,4.711,4.713,12.354,0.002,17.065C366.401,371.112,363.311,372.291,360.224,372.291z"/>
+      </g>
+      <g>
+      	<path style="fill:#FFC61B;" d="M178.186,190.255c-3.089,0-6.177-1.179-8.533-3.536l-26.409-26.41
+      		c-4.711-4.711-4.711-12.354,0.002-17.065c4.713-4.71,12.355-4.708,17.065,0.002l26.409,26.41
+      		c4.711,4.711,4.711,12.354-0.002,17.065C184.363,189.078,181.274,190.255,178.186,190.255z"/>
+      	<path style="fill:#FFC61B;" d="M151.776,372.291c-3.088,0-6.177-1.179-8.533-3.534c-4.711-4.713-4.711-12.354,0-17.067l26.41-26.41
+      		c4.713-4.71,12.354-4.71,17.067,0c4.711,4.713,4.711,12.353,0,17.067l-26.41,26.41
+      		C157.953,371.112,154.864,372.291,151.776,372.291z"/>
+      </g>
+      <path style="fill:#EAA22F;" d="M333.814,190.254c-3.088,0-6.177-1.179-8.533-3.534c-4.711-4.713-4.711-12.354,0-17.067l26.41-26.41
+      	c4.713-4.71,12.353-4.71,17.067,0c4.711,4.713,4.711,12.354,0,17.067l-26.41,26.41C339.99,189.076,336.901,190.254,333.814,190.254z
+      	"/>
+      </svg>
+      Tema Cerah</button>
+    <button onclick="setTheme('dark')" class="modalBtn">
+      <svg height="800px" width="800px" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+      	 viewBox="0 0 512 512" xml:space="preserve">
+      <circle style="fill:#263A7A;" cx="256" cy="256" r="256"/>
+      <path style="fill:#121149;" d="M274.253,511.345c101.633-7.161,186.878-73.642,221.344-165.036L238.411,89.122l-101.36,62.869
+      	l-32.754,168.943l28.389,48.843L274.253,511.345z"/>
+      <path style="fill:#FFC61B;" d="M305.778,341.333c-74.619,0-135.111-60.492-135.111-135.111c0-50.079,27.267-93.762,67.744-117.1
+      	C154.009,97.914,88.207,169.27,88.207,256c0,92.67,75.124,167.793,167.793,167.793c86.73,0,158.086-65.803,166.878-150.204
+      	C399.539,314.066,355.857,341.333,305.778,341.333z"/>
+      <path style="fill:#EAA22F;" d="M305.778,341.333c-37.017,0-70.546-14.898-94.949-39.012l-72.894,72.894
+      	c30.318,30.027,72.023,48.578,118.065,48.578c86.73,0,158.086-65.803,166.878-150.204
+      	C399.539,314.066,355.857,341.333,305.778,341.333z"/>
+      </svg>
+      Tema Gelap</button>
+    <button onclick="setTheme('future')" class="modalBtn">
+      <svg height="800px" width="800px" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+      	 viewBox="0 0 512 512" xml:space="preserve">
+      <circle style="fill:#273B7A;" cx="256" cy="256" r="256"/>
+      <path style="fill:#121149;" d="M316.873,504.698c100.288-24.464,177.417-107.991,192.448-211.646L357.024,140.755l-16.608,19.573
+      	l-81.144-81.649l-4.422,24.466v10.888l53.324,53.322L279.14,258.82l-97.956-97.954l-3.336-1.121l-2.76,7.215l101.112,101.112
+      	l-23.642,74.476L149.551,239.54l-9.269,1.876l-25.922,3.368l128.843,127.241l-1.586,4.998l-60.433-60.433l-7.209,7.935l0.079,0.079
+      	l-19.077,18.194L316.873,504.698z"/>
+      <path style="fill:#FFC61B;" d="M341.333,227.556c0-48.266-40.072-87.173-88.762-85.266c-43.625,1.708-79.357,36.821-81.77,80.413
+      	c-1.658,29.941,12.133,56.749,34.126,73.202c14.038,10.502,22.628,26.734,22.628,44.266v29.606c0,15.71,12.734,28.444,28.444,28.444
+      	l0,0c15.71,0,28.444-12.734,28.444-28.444v-29.132c0-17.77,8.678-34.228,22.869-44.922
+      	C327.975,280.155,341.333,255.419,341.333,227.556z"/>
+      <path style="fill:#EAA22F;" d="M256,142.245v255.978c15.71,0,28.444-12.734,28.444-28.444v-29.132
+      	c0-17.77,8.678-34.228,22.869-44.922c20.661-15.569,34.02-40.305,34.02-68.168C341.333,180.429,303.126,142.246,256,142.245z"/>
+      <path style="fill:#D0D1D3;" d="M227.556,341.333v28.444c0,15.71,12.734,28.444,28.444,28.444l0,0
+      	c15.71,0,28.444-12.734,28.444-28.444v-28.446L227.556,341.333z"/>
+      <path style="fill:#A6A8AA;" d="M256,341.332v56.891c15.71,0,28.444-12.734,28.444-28.444v-28.446H256z"/>
+      <path style="fill:#FEE187;" d="M256,114.209c-2.381,0-4.31-1.929-4.31-4.31V81.455c0-2.381,1.929-4.31,4.31-4.31
+      	s4.31,1.929,4.31,4.31v28.444C260.31,112.28,258.381,114.209,256,114.209z"/>
+      <g>
+      	<path style="fill:#FFC61B;" d="M256,77.145v37.064c2.381,0,4.31-1.929,4.31-4.31V81.455C260.31,79.074,258.381,77.145,256,77.145z"
+      		/>
+      	<path style="fill:#FFC61B;" d="M394.559,246.088h-28.444c-2.381,0-4.31-1.929-4.31-4.31s1.929-4.31,4.31-4.31h28.444
+      		c2.381,0,4.31,1.929,4.31,4.31S396.94,246.088,394.559,246.088z"/>
+      </g>
+      <path style="fill:#FEE187;" d="M145.886,246.088h-28.444c-2.381,0-4.31-1.929-4.31-4.31s1.929-4.31,4.31-4.31h28.444
+      	c2.381,0,4.31,1.929,4.31,4.31S148.266,246.088,145.886,246.088z"/>
+      <path style="fill:#FFC61B;" d="M353.976,344.064c-1.103,0-2.205-0.421-3.048-1.262l-20.113-20.115c-1.684-1.684-1.684-4.413,0-6.094
+      	c1.684-1.684,4.411-1.684,6.094,0l20.113,20.115c1.684,1.684,1.684,4.413,0,6.094C356.181,343.643,355.08,344.064,353.976,344.064z"
+      	/>
+      <path style="fill:#FEE187;" d="M178.138,168.226c-1.103,0-2.205-0.421-3.048-1.262l-20.113-20.113c-1.684-1.684-1.684-4.411,0-6.094
+      	s4.411-1.684,6.094,0l20.113,20.113c1.684,1.684,1.684,4.411,0,6.094C180.343,167.805,179.241,168.226,178.138,168.226z"/>
+      <path style="fill:#FFC61B;" d="M333.862,168.226c-1.103,0-2.205-0.421-3.048-1.262c-1.684-1.684-1.684-4.411,0-6.094l20.115-20.115
+      	c1.684-1.684,4.411-1.684,6.094,0c1.683,1.684,1.684,4.411,0,6.094l-20.115,20.115C336.067,167.805,334.965,168.226,333.862,168.226
+      	z"/>
+      <path style="fill:#FEE187;" d="M158.024,344.064c-1.103,0-2.205-0.421-3.048-1.262c-1.684-1.684-1.684-4.413,0-6.094l20.115-20.113
+      	c1.684-1.684,4.411-1.684,6.094,0s1.684,4.413,0,6.094l-20.115,20.113C160.228,343.643,159.127,344.064,158.024,344.064z"/>
+      <path style="fill:#FF5419;" d="M239.616,280.135c-1.588,0-3.191-0.484-4.57-1.495c-3.46-2.527-4.213-7.38-1.686-10.84l23.74-32.487
+      	h-17.477c-2.92,0-5.594-1.641-6.918-4.246c-1.322-2.605-1.069-5.73,0.655-8.089l32.754-44.822c2.526-3.46,7.378-4.218,10.84-1.686
+      	c3.46,2.527,4.213,7.38,1.686,10.84l-23.74,32.487h17.477c2.92,0,5.594,1.641,6.918,4.246c1.322,2.605,1.069,5.73-0.655,8.089
+      	l-32.754,44.822C244.367,279.033,242.009,280.135,239.616,280.135z"/>
+      <g>
+      	<path style="fill:#C92F00;" d="M278.64,187.311c2.529-3.46,1.774-8.313-1.686-10.84c-3.462-2.534-8.314-1.774-10.84,1.686
+      		L256,191.997v26.296L278.64,187.311z"/>
+      	<path style="fill:#C92F00;" d="M272.377,219.798H256v15.515h1.098L256,236.816v26.296l22.64-30.98
+      		c1.724-2.358,1.976-5.485,0.655-8.089C277.971,221.439,275.297,219.798,272.377,219.798z"/>
+      </g>
+      </svg>
+      Dark Futuristik</button>
+    <button onclick="confirmChangePhoto()" class="modalBtn">
+      <svg width="800px" height="800px" viewBox="0 0 61.7998 61.7998" xmlns="http://www.w3.org/2000/svg">
+      
+      <title/>
+      
+      <g data-name="Layer 2" id="Layer_2">
+      
+      <g data-name="—ÎÓÈ 1" id="_ÎÓÈ_1">
+      
+      <circle cx="30.8999" cy="30.8999" fill="#ffc200" r="30.8999"/>
+      
+      <path d="M52.587 52.908a30.895 30.895 0 0 1-43.667-.291 9.206 9.206 0 0 1 4.037-4.832 19.799 19.799 0 0 1 4.075-2.322c-2.198-7.553 3.777-11.266 6.063-12.335 0 3.487 3.265 1.173 7.317 1.217 3.336.037 9.933 3.395 9.933-1.035 3.67 1.086 7.67 8.08 4.917 12.377a17.604 17.604 0 0 1 3.181 2.002 10.192 10.192 0 0 1 4.144 5.22z" fill="#677079" fill-rule="evenodd"/>
+      
+      <path d="M24.032 38.68l14.92.09v3.437l-.007.053a2.784 2.784 0 0 1-.07.462l-.05.341-.03.071c-.966 5.074-5.193 7.035-7.803 8.401-2.75-1.498-6.638-4.197-6.947-8.972l-.013-.059v-.2a8.897 8.897 0 0 1-.004-.207c0 .036.003.07.004.106z" fill="#f9dca4" fill-rule="evenodd"/>
+      
+      <path d="M38.953 38.617v4.005a7.167 7.167 0 0 1-.095 1.108 6.01 6.01 0 0 1-.38 1.321c-5.184 3.915-13.444.704-14.763-5.983z" fill-rule="evenodd" opacity="0.11"/>
+      
+      <path d="M18.104 25.235c-4.94 1.27-.74 7.29 2.367 7.264a19.805 19.805 0 0 1-2.367-7.264z" fill="#f9dca4" fill-rule="evenodd"/>
+      
+      <path d="M43.837 25.235c4.94 1.27.74 7.29-2.368 7.263a19.8 19.8 0 0 0 2.368-7.263z" fill="#f9dca4" fill-rule="evenodd"/>
+      
+      <path d="M30.733 11.361c20.523 0 12.525 32.446 0 32.446-11.83 0-20.523-32.446 0-32.446z" fill="#ffe8be" fill-rule="evenodd"/>
+      
+      <path d="M21.047 22.105a1.738 1.738 0 0 1-.414 2.676c-1.45 1.193-1.503 5.353-1.503 5.353-.56-.556-.547-3.534-1.761-5.255s-2.032-13.763 4.757-18.142a4.266 4.266 0 0 0-.933 3.6s4.716-6.763 12.54-6.568a5.029 5.029 0 0 0-2.487 3.26s6.84-2.822 12.54.535a13.576 13.576 0 0 0-4.145 1.947c2.768.076 5.443.59 7.46 2.384a3.412 3.412 0 0 0-2.176 4.38c.856 3.503.936 6.762.107 8.514-.829 1.752-1.22.621-1.739 4.295a1.609 1.609 0 0 1-.77 1.214c-.02.266.382-3.756-.655-4.827-1.036-1.07-.385-2.385.029-3.163 2.89-5.427-5.765-7.886-10.496-7.88-4.103.005-14 1.87-10.354 7.677z" fill="#8a5c42" fill-rule="evenodd"/>
+      
+      <path d="M19.79 49.162c.03.038 10.418 13.483 22.63-.2-1.475 4.052-7.837 7.27-11.476 7.26-6.95-.02-10.796-5.6-11.154-7.06z" fill="#434955" fill-rule="evenodd"/>
+      
+      <path d="M36.336 61.323c-.41.072-.822.135-1.237.192v-8.937a.576.576 0 0 1 .618-.516.576.576 0 0 1 .619.516v8.745zm-9.82.166q-.622-.089-1.237-.2v-8.711a.576.576 0 0 1 .618-.516.576.576 0 0 1 .62.516z" fill="#e6e6e6" fill-rule="evenodd"/>
+      
+      </g>
+      
+      </g>
+      
+      </svg>
+      Ubah Foto Profil</button>
+      <button id="chatAdminBtn" class="modalBtn">
+        <!-- icon WA -->
+        <svg height="800px" width="800px" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+        	 viewBox="0 0 512 512" xml:space="preserve">
+        <path style="fill:#20A83E;" d="M437.019,74.98C388.668,26.628,324.38,0,256,0S123.333,26.628,74.98,74.98S0,187.62,0,256
+        	c0,51.485,15.154,100.938,43.874,143.34L0.69,500.106c-1.343,3.134-0.607,6.966,1.798,9.381c2.495,2.506,6.519,3.206,9.714,1.684
+        	l96.358-45.885C151.858,495.866,202.721,512,256,512c68.38,0,132.668-26.628,181.019-74.98C485.371,388.667,512,324.38,512,256
+        	S485.371,123.333,437.019,74.98z"/>
+        <circle style="fill:#E5E5E5;" cx="256" cy="256" r="213.333"/>
+        <circle style="fill:#FFFFFF;" cx="256" cy="256" r="187.733"/>
+        <path style="fill:#20A83E;" d="M392.391,342.641l-7.673-41.561c-0.635-3.432-3.295-6.133-6.718-6.818l-60.339-12.067
+        	c-2.802-0.559-5.691,0.317-7.709,2.334l-24.514,24.514c-41.302-18.507-64.226-41.478-84.396-84.555l24.435-24.436
+        	c2.018-2.017,2.893-4.91,2.334-7.708l-12.068-60.34c-0.685-3.423-3.386-6.084-6.819-6.718l-41.561-7.673
+        	c-1.138-0.21-2.31-0.187-3.44,0.07c-10.974,2.494-20.987,8.023-28.956,15.994c-13.801,13.801-19.075,33.938-15.252,58.237
+        	c6.418,40.801,26.409,97.583,63.289,134.61l0.502,0.5c37.001,36.855,93.782,56.846,134.583,63.265
+        	c5.14,0.809,10.092,1.21,14.838,1.21c17.694,0,32.517-5.581,43.4-16.462c7.97-7.971,13.5-17.984,15.993-28.957
+        	C392.578,344.951,392.602,343.78,392.391,342.641z"/>
+        <path style="fill:#189433;" d="M349.996,376.428c-4.747,0-9.698-0.401-14.838-1.21c-40.801-6.419-97.583-26.41-134.583-63.265
+        	l-0.502-0.5c-36.88-37.027-56.87-93.809-63.289-134.61c-3.323-21.118,0.236-39.088,10.283-52.492
+        	c-4.388,2.565-8.458,5.689-12.097,9.328c-13.801,13.801-19.075,33.938-15.252,58.237c6.418,40.801,26.409,97.583,63.289,134.61
+        	l0.502,0.5c37.001,36.855,93.782,56.846,134.583,63.265c5.14,0.809,10.092,1.21,14.838,1.21c17.694,0,32.517-5.581,43.4-16.462
+        	c1.974-1.974,3.797-4.075,5.463-6.284C372.747,373.836,362.037,376.428,349.996,376.428z"/>
+        </svg>
+        Umpan balik dan saran
+      </button>
+    <button id="installBtn" class="modalBtn">
+      <svg width="800px" height="800px" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="48" height="48" fill="white" fill-opacity="0.01"/>
+      <path d="M41.4004 11.551L36.3332 5H11.6666L6.58398 11.551" stroke="#000000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M6 13C6 11.8954 6.89543 11 8 11H40C41.1046 11 42 11.8954 42 13V40C42 41.6569 40.6569 43 39 43H9C7.34315 43 6 41.6569 6 40V13Z" fill="#2F88FF" stroke="#000000" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M32 27L24 35L16 27" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M23.9917 19V35" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>Install aplikasi (3 MB)
+    </button>
+    <button onclick="logout()" class="modalBtn">
+      <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+      	 viewBox="0 0 512 512" xml:space="preserve">
+      <rect x="84.809" y="56.055" style="fill:#EF3E25;" width="342.418" height="38.91"/>
+      <polygon style="fill:#F25B22;" points="489.481,266.173 256.017,452.944 22.553,266.173 84.811,266.173 84.811,94.967 
+      	427.224,94.967 427.224,266.173 "/>
+      <polygon style="fill:#F36E24;" points="84.811,94.967 84.811,266.173 22.553,266.173 256.017,452.944 256.017,94.967 "/>
+      <path d="M435.112,258.659V48.542H76.888v210.117H0l256,204.8l256-204.8L435.112,258.659L435.112,258.659z M92.698,64.352h326.602
+      	v23.101H92.698V64.352z M398.833,328.945L256,443.212L113.167,328.945h88.359v-15.811H93.403l-48.33-38.665h47.626V103.264h326.602
+      	V274.47h47.626l-48.33,38.665H310.475v15.811L398.833,328.945L398.833,328.945z"/>
+      <g>
+      	<polygon style="fill:#FFFFFF;" points="115.799,258.907 185.962,258.907 185.962,243.096 131.61,243.096 131.61,204.431 
+      		185.962,204.431 185.962,188.62 131.61,188.62 131.61,149.956 185.962,149.956 185.962,134.145 115.799,134.145 	"/>
+      	<polygon style="fill:#FFFFFF;" points="269.531,144.936 255.418,137.808 232.462,183.261 208.5,138.331 194.55,145.771 
+      		223.747,200.515 195.776,255.897 209.889,263.026 232.845,217.573 256.807,262.503 270.757,255.062 241.56,200.318 	"/>
+      	<rect x="287.007" y="134.265" style="fill:#FFFFFF;" width="15.811" height="124.515"/>
+      	<polygon style="fill:#FFFFFF;" points="349.263,258.782 365.074,258.782 365.074,149.956 396.079,149.956 396.079,134.145 
+      		318.257,134.145 318.257,149.956 349.263,149.956 	"/>
+      	<rect x="248.218" y="313.137" style="fill:#FFFFFF;" width="15.564" height="15.811"/>
+      </g>
+      <rect x="279.344" y="313.137" width="15.564" height="15.811"/>
+      <rect x="217.092" y="313.137" width="15.564" height="15.811"/>
+      </svg>
+      Logout</button>
+  </div>
+  
+  <div id="status" class="loading">Memuat...</div>
+  
+  <!-- CARD 1 -->
+  <div id="summary" class="card profile-summary" style="display:none">
+    <div class="avatar"></div>
+    <div class="name" id="namaLengkap"></div>
+    <div class="stats-card">
+      <div class="stat">
+        <b id="point">0</b>
+        <small>Point</small>
+      </div>
+      <div class="divider"></div>
+      <div class="stat">
+        <b id="orderGift">0</b>
+        <small>Order Gift</small>
+      </div>
+    </div>
+  </div>
+  
+  <!-- CARD 2 -->
+  <div id="detail" class="card profile-detail" style="display:none">
+    <div class="row"><div class="label">Nama Lengkap</div><div class="value" id="dNama"></div></div>
+    <div class="row"><div class="label">Email</div><div class="value" id="dEmail"></div></div>
+    <div class="row"><div class="label">Wilayah</div><div class="value" id="dWilayah"></div></div>
+    <div class="row"><div class="label">Point</div><div class="value" id="dPoint"></div></div>
+    <div class="row"><div class="label">Order Gift</div><div class="value" id="dOrder"></div></div>
+  </div>
+  
+  <!-- CARD GALERI -->
+  <div class="card gallery-card">
+    <div class="gallery">
+      <img id="foto1" src="default.png" alt="Foto 1">
+      <img id="foto2" src="default.png" alt="Foto 2">
+    </div>
+  </div>
+  <!-- INPUT FILE (HIDDEN) -->
+  <input 
+    type="file" 
+    id="fileAvatar" 
+    accept="image/*" 
+    style="display:none"
+  />
+  <!-- POPUP INSTALL -->
+  <div id="installOverlay" class="overlay">
+    <div id="installPopup" class="popup">
+      <img src="ikon-512.png" alt="Icon" class="popup-icon">
+  
+      <div class="popup-title">Install aplikasi biar praktis</div>
+      <div class="popup-desc">(<4 MB)</div>
+  
+      <button id="installPopupBtn" class="popup-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" class="btn-icon" viewBox="0 0 24 24">
+          <path d="M12 3v10m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Install
+      </button>
+    </div>
+  </div>
+  <!-- POPUP KONFIRMASI -->
+  <div id="confirmPopup" class="popup" style="right:50%;top:40%;transform:translate(50%,-50%) scale(.95)">
+    <p style="margin:0 0 12px;font-weight:600">Ubah foto profil Anda?</p>
+    <button onclick="openGallery()">✅ Oke</button>
+    <button onclick="closeConfirm()">❌ Batal</button>
+  </div>
+  
+  <!-- TOAST -->
+  <div id="toast" style="
+    position:fixed;
+    bottom:24px;
+    left:50%;
+    transform:translateX(-50%);
+    background:#111827;
+    color:#fff;
+    padding:12px 18px;
+    border-radius:14px;
+    font-size:14px;
+    opacity:0;
+    transition:.3s;
+    z-index:9999;
+  ">
+    Foto berhasil diubah
+  </div>
+  <footer class="footer">
+    <div class="footer-title">Follow Aku:</div>
+  
+    <div class="footer-social">
+      <!-- Facebook -->
+      <a href="https://www.facebook.com/share/14TkqjQ8AE8/" target="_blank" class="social-btn" aria-label="Facebook">
+        <svg viewBox="0 0 24 24">
+          <path d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.7v-2.9h2.7V9.8c0-2.7 1.6-4.2 4-4.2 1.2 0 2.4.2 2.4.2v2.6h-1.3c-1.3 0-1.7.8-1.7 1.6v1.9h2.9l-.5 2.9h-2.4v7A10 10 0 0 0 22 12z"/>
+        </svg>
+      </a>
+  
+      <!-- Instagram -->
+      <a href="https://www.instagram.com/familiwater?igsh=MTQwNWp0Mm9zb2Z1cQ==" target="_blank" class="social-btn" aria-label="Instagram">
+        <svg viewBox="0 0 24 24">
+          <path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm5 5.5a4.5 4.5 0 1 0 0 9a4.5 4.5 0 0 0 0-9zm0 7.4a2.9 2.9 0 1 1 0-5.8a2.9 2.9 0 0 1 0 5.8zM17.5 6.4a1.1 1.1 0 1 0 0 2.2a1.1 1.1 0 0 0 0-2.2z"/>
+        </svg>
+      </a>
+  
+      <!-- Threads -->
+      <a href="https://www.threads.com/@familiwater" target="_blank" class="social-btn" aria-label="Threads">
+        <svg aria-label="Threads" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg"><path class="x19hqcy" d="M141.537 88.9883C140.71 88.5919 139.87 88.2104 139.019 87.8451C137.537 60.5382 122.616 44.905 97.5619 44.745C97.4484 44.7443 97.3355 44.7443 97.222 44.7443C82.2364 44.7443 69.7731 51.1409 62.102 62.7807L75.881 72.2328C81.6116 63.5383 90.6052 61.6848 97.2286 61.6848C97.3051 61.6848 97.3819 61.6848 97.4576 61.6855C105.707 61.7381 111.932 64.1366 115.961 68.814C118.893 72.2193 120.854 76.925 121.825 82.8638C114.511 81.6207 106.601 81.2385 98.145 81.7233C74.3247 83.0954 59.0111 96.9879 60.0396 116.292C60.5615 126.084 65.4397 134.508 73.775 140.011C80.8224 144.663 89.899 146.938 99.3323 146.423C111.79 145.74 121.563 140.987 128.381 132.296C133.559 125.696 136.834 117.143 138.28 106.366C144.217 109.949 148.617 114.664 151.047 120.332C155.179 129.967 155.42 145.8 142.501 158.708C131.182 170.016 117.576 174.908 97.0135 175.059C74.2042 174.89 56.9538 167.575 45.7381 153.317C35.2355 139.966 29.8077 120.682 29.6052 96C29.8077 71.3178 35.2355 52.0336 45.7381 38.6827C56.9538 24.4249 74.2039 17.11 97.0132 16.9405C119.988 17.1113 137.539 24.4614 149.184 38.788C154.894 45.8136 159.199 54.6488 162.037 64.9503L178.184 60.6422C174.744 47.9622 169.331 37.0357 161.965 27.974C147.036 9.60668 125.202 0.195148 97.0695 0H96.9569C68.8816 0.19447 47.2921 9.6418 32.7883 28.0793C19.8819 44.4864 13.2244 67.3157 13.0007 95.9325L13 96L13.0007 96.0675C13.2244 124.684 19.8819 147.514 32.7883 163.921C47.2921 182.358 68.8816 191.806 96.9569 192H97.0695C122.03 191.827 139.624 185.292 154.118 170.811C173.081 151.866 172.51 128.119 166.26 113.541C161.776 103.087 153.227 94.5962 141.537 88.9883ZM98.4405 129.507C88.0005 130.095 77.1544 125.409 76.6196 115.372C76.2232 107.93 81.9158 99.626 99.0812 98.6368C101.047 98.5234 102.976 98.468 104.871 98.468C111.106 98.468 116.939 99.0737 122.242 100.233C120.264 124.935 108.662 128.946 98.4405 129.507Z"></path></svg>
+      </a>
+  
+      <!-- X / Twitter -->
+      <a href="https://x.com/faqih96670" target="_blank" class="social-btn" aria-label="X">
+        <svg viewBox="0 0 24 24">
+          <path d="M18.3 2H21l-6.1 7.1L22 22h-6.6l-5.2-7.1L4.5 22H2l6.6-7.6L2 2h6.7l4.7 6.4L18.3 2z"/>
+        </svg>
+      </a>
+    </div>
+  
+    <div class="footer-copy">
+      Air Godogan - FAMILI WATER 2026©
+    </div>
+  </footer>
+  <nav class="navbar">
+    <a href="index.html" class="nav-item" data-page="index.html">
+      <svg width="36" viewBox="0 0 1664 1312" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path d="M1408 768v480q0 26-19 45t-45 19H960V928H704v384H320q-26 0-45-19t-19-45V768q0-1 .5-3t.5-3l575-474l575 474q1 2 1 6zm223-69l-62 74q-8 9-21 11h-3q-13 0-21-7L832 200L140 777q-12 8-24 7q-13-2-21-11l-62-74q-8-10-7-23.5T37 654L756 55q32-26 76-26t76 26l244 204V64q0-14 9-23t23-9h192q14 0 23 9t9 23v408l219 182q10 8 11 21.5t-7 23.5z" fill="currentColor"/></svg>
+      <span>Home</span>
+    </a>
+  
+    <a href="game.html" class="nav-item" data-page="game.html">
+      <svg width="36" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path d="M15.9 5.5C15.3 4.5 14.2 4 13 4H7c-1.2 0-2.3.5-2.9 1.5c-2.3 3.5-2.8 8.8-1.2 9.9c1.6 1.1 5.2-3.7 7.1-3.7s5.4 4.8 7.1 3.7c1.6-1.1 1.1-6.4-1.2-9.9zM8 9H7v1H6V9H5V8h1V7h1v1h1v1zm5.4.5c0 .5-.4.9-.9.9s-.9-.4-.9-.9s.4-.9.9-.9s.9.4.9.9zm1.9-2c0 .5-.4.9-.9.9s-.9-.4-.9-.9s.4-.9.9-.9s.9.4.9.9z" fill="currentColor"/></svg>
+      <span>Game</span>
+    </a>
+  
+    <a href="https://wa.me/6285759995235?text=Ang%20pengen%20banyu" target="_blank" class="nav-wa">
+      <img src="logofw.png" alt="WA">
+    </a>
+  
+    <a href="riwayat.html" class="nav-item" data-page="riwayat.html">
+      <svg width="36" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path class="uim-primary" d="M12 2a10.017 10.017 0 0 0-6.994 2.872V3a1 1 0 0 0-2 0v4.5a1 1 0 0 0 1 1h4.5a1 1 0 0 0 0-2H6.218A7.98 7.98 0 1 1 4 12a1 1 0 0 0-2 0A10 10 0 1 0 12 2z" fill="currentColor"/><path class="uim-primary" d="M14 13h-2a1 1 0 0 1-1-1V9a1 1 0 0 1 2 0v2h1a1 1 0 0 1 0 2z" fill="currentColor"/><path class="uim-tertiary" d="M12 4a8.008 8.008 0 0 0-5.782 2.5h2.288a1 1 0 0 1 0 2h-4.5a.99.99 0 0 1-.978-.889A9.922 9.922 0 0 0 2 12a1 1 0 0 1 2 0a8 8 0 1 0 8-8zm2 9h-2a1 1 0 0 1-1-1V9a1 1 0 0 1 2 0v2h1a1 1 0 0 1 0 2z" opacity=".5" fill="currentColor"/></svg>
+      <span>Riwayat</span>
+    </a>
+  
+    <a href="profil.html" class="nav-item nav-profile" data-page="profil.html">
+      <div class="nav-avatar">
+      <svg width="36" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M24 42c9.941 0 18-8.059 18-18S33.941 6 24 6S6 14.059 6 24s8.059 18 18 18zm0 2c11.046 0 20-8.954 20-20S35.046 4 24 4S4 12.954 4 24s8.954 20 20 20z" fill="currentColor"/><path d="M12 35.63c0-1.033.772-1.906 1.8-2.02c7.715-.854 12.72-.777 20.418.019a1.99 1.99 0 0 1 1.108 3.472c-9.085 7.919-14.277 7.81-22.686.008c-.41-.38-.64-.92-.64-1.478z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M34.115 34.623c-7.637-.79-12.57-.864-20.206-.019c-.514.057-.909.496-.909 1.027c0 .286.119.557.32.745c4.168 3.866 7.326 5.613 10.413 5.624c3.098.011 6.426-1.722 10.936-5.652a.99.99 0 0 0-.554-1.724zM13.69 32.616c7.796-.863 12.874-.785 20.632.018a2.99 2.99 0 0 1 1.662 5.221c-4.575 3.988-8.385 6.16-12.257 6.145c-3.883-.014-7.525-2.223-11.766-6.158A3.018 3.018 0 0 1 11 35.63a3.028 3.028 0 0 1 2.69-3.015z" fill="currentColor"/><path d="M32 20a8 8 0 1 1-16 0a8 8 0 0 1 16 0z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M24 26a6 6 0 1 0 0-12a6 6 0 0 0 0 12zm0 2a8 8 0 1 0 0-16a8 8 0 0 0 0 16z" fill="currentColor"/></g></svg>
+  
+      </div>
+      <span>Profil</span>
+    </a>
+  </nav>
+<script>
+/* =============================
+   FIREBASE INIT (TIDAK DIUBAH)
+============================= */
+firebase.initializeApp({
+  apiKey: "AIzaSyCl13_a4x-BQnWNUjf9JOQX1DKc-HxLBys",
+  authDomain: "klien-39696.firebaseapp.com",
+  projectId: "klien-39696"
+});
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+/* =============================
+   DOM ELEMENTS (HARUS ADA)
+============================= */
+const namaLengkap = document.getElementById("namaLengkap");
+const point = document.getElementById("point");
+const orderGift = document.getElementById("orderGift");
+
+const dNama = document.getElementById("dNama");
+const dEmail = document.getElementById("dEmail");
+const dWilayah = document.getElementById("dWilayah");
+const dPoint = document.getElementById("dPoint");
+const dOrder = document.getElementById("dOrder");
+
+const popup = document.getElementById("popup");
+const overlay = document.getElementById("overlay");
+
+/* =============================
+   AUTH CHECK (TETAP)
+============================= */
+auth.onAuthStateChanged(async user=>{
+  if(!user){
+    window.location.replace("login.html");
+    return;
+  }
+
+  try{
+    await loadProfile(user.uid);
+  }catch(err){
+    document.getElementById("status").innerHTML =
+      `<div class="error">${err.message}</div>`;
+  }
+});
+
+/* =============================
+   LOAD PROFILE (LOGIKA ASLI)
+============================= */
+async function loadProfile(uid){
+  let ref = db.collection("members").doc(uid);
+  let doc = await ref.get();
+
+  if(!doc.exists){
+    ref = db.collection("agens").doc(uid);
+    doc = await ref.get();
+  }
+
+  if(!doc.exists){
+    throw new Error("Akun tidak terdaftar sebagai member atau agen");
+  }
+
+  const d = doc.data();
+
+  document.getElementById("status").style.display="none";
+  document.getElementById("summary").style.display="block";
+  document.getElementById("detail").style.display="block";
+
+  namaLengkap.innerText = d.namaLengkap || "-";
+  point.innerText = d.point || 0;
+  orderGift.innerText = d.orderGift || 0;
+
+  dNama.innerText = d.namaLengkap || "-";
+  dEmail.innerText = d.email || "-";
+  dWilayah.innerText = d.wilayah || "-";
+  dPoint.innerText = d.point || 0;
+  dOrder.innerText = d.orderGift || 0;
+
+  loadStockFoto();
+}
+
+/* =============================
+   UI HANDLER
+============================= */
+function togglePopup(){
+  popup.classList.toggle("show");
+  overlay.classList.toggle("show");
+}
+
+function logout(){
+  auth.signOut().then(()=>{
+    window.location.replace("login.html");
+  });
+}
+
+/* =============================
+   STOCK FOTO
+============================= */
+async function loadStockFoto(){
+  try{
+    const snap = await db.collection("stockfoto").limit(1).get();
+    if(snap.empty) return;
+
+    const data = snap.docs[0].data();
+    setImage("foto1", data.foto1);
+    setImage("foto2", data.foto2);
+  }catch(err){
+    console.error("Gagal load stockfoto:", err);
+  }
+}
+
+function setImage(id, url){
+  const img = document.getElementById(id);
+  if(!img) return;
+
+  img.src = url || "default.png";
+  img.onerror = () => img.src = "default.png";
+}
+
+/* =============================
+   FOTO PROFIL (LOCAL STORAGE)
+============================= */
+const avatar = document.querySelector(".avatar");
+const fileInput = document.getElementById("fileAvatar");
+const confirmPopup = document.getElementById("confirmPopup");
+const toast = document.getElementById("toast");
+
+/* load avatar dari localStorage */
+const savedAvatar = localStorage.getItem("fotoProfil");
+if(savedAvatar){
+  avatar.style.backgroundImage = `url(${savedAvatar})`;
+  avatar.style.backgroundSize = "cover";
+  avatar.style.backgroundPosition = "center";
+}
+
+/* buka popup konfirmasi */
+function confirmChangePhoto(){
+  togglePopup();
+  confirmPopup.classList.add("show","show-center");
+  overlay.classList.add("show");
+}
+
+function closeConfirm(){
+  confirmPopup.classList.remove("show","show-center");
+  overlay.classList.remove("show");
+}
+
+function openGallery(){
+  closeConfirm();
+  fileInput.click();
+}
+
+fileInput.addEventListener("change",()=>{
+  const file = fileInput.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onload = e =>{
+    const base64 = e.target.result;
+
+    localStorage.setItem("fotoProfil", base64);
+    loadNavbarAvatar();
+
+    avatar.style.backgroundImage = `url(${base64})`;
+    avatar.style.backgroundSize = "cover";
+    avatar.style.backgroundPosition = "center";
+
+    showToast();
+  };
+  reader.readAsDataURL(file);
+});
+
+function showToast(){
+  toast.style.opacity = 1;
+  setTimeout(()=>toast.style.opacity = 0, 2200);
+}
+
+/* =============================
+   THEME MANAGER
+============================= */
+const THEME_KEY = "app-theme";
+
+const savedTheme = localStorage.getItem(THEME_KEY);
+if(savedTheme === "light" || savedTheme === "dark" || savedTheme === "future"){
+  document.body.classList.add(`theme-${savedTheme}`);
+}else{
+  document.body.classList.add("theme-light");
+}
+
+function setTheme(theme){
+  document.body.classList.remove("theme-light","theme-dark","theme-future");
+  document.body.classList.add(`theme-${theme}`);
+  localStorage.setItem(THEME_KEY, theme);
+  togglePopup();
+}
+
+/* NAVBAR ACTIV */
+const currentPage = location.pathname.split("/").pop();
+document.querySelectorAll(".nav-item").forEach(item=>{
+  if(item.dataset.page === currentPage){
+    item.classList.add("active");
+  }
+});
+
+/* NAVBAR SCROLL BEHAVIOR */
+let lastScrollY = window.scrollY;
+const navbar = document.querySelector(".navbar");
+window.addEventListener("scroll", ()=>{
+  const currentScroll = window.scrollY;
+  if(currentScroll > lastScrollY && currentScroll > 80){
+    navbar.classList.add("hide");
+  }else{
+    navbar.classList.remove("hide");
+  }
+  lastScrollY = currentScroll;
+});
+
+/* NAVBAR PROFILE PHOTO SYNC */
+function loadNavbarAvatar(){
+  const avatarNav = document.querySelector(".nav-avatar");
+  if(!avatarNav) return;
+
+  const foto = localStorage.getItem("fotoProfil") || "default.png";
+  avatarNav.innerHTML = `<img src="${foto}" alt="Profil" onerror="this.src='default.png'">`;
+}
+
+loadNavbarAvatar();
+  // ===== Install Button + Popup =====
+  const installBtnProfile = document.getElementById("installBtnProfile");
+  const installOverlay = document.getElementById("installOverlay");
+  const installPopupBtn = document.getElementById("installPopupBtn");
+  
+  let deferredPrompt = null;
+  
+  // 1. detect beforeinstallprompt
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+  });
+  
+  // 2. hide button kalau dibuka dari PWA
+  const isInPWA = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  if (isInPWA) {
+    installBtnProfile.style.display = "none";
+  }
+  
+  // 3. klik tombol => popup muncul
+  installBtnProfile.addEventListener("click", () => {
+    installOverlay.classList.add("show");
+    installOverlay.style.display = "flex";
+  });
+  
+  // 4. klik area luar popup => popup hilang
+  installOverlay.addEventListener("click", (e) => {
+    if (e.target === installOverlay) {
+      installOverlay.classList.remove("show");
+      installOverlay.style.display = "none";
+    }
+  });
+  
+  // 5. klik install => proses install
+  installPopupBtn.addEventListener("click", async () => {
+    if (!deferredPrompt) {
+      alert("Install belum tersedia. Coba ulangi setelah beberapa saat.");
+      return;
+    }
+  
+    installOverlay.classList.remove("show");
+    installOverlay.style.display = "none";
+  
+    deferredPrompt.prompt();
+    const choice = await deferredPrompt.userChoice;
+  
+    if (choice.outcome === "accepted") {
+      localStorage.setItem("fwpwa_installed", "true");
+    }
+  });
+</script>
+<script>
+  let deferredPrompt;
+  const installBtn = document.getElementById("installBtn"); // ID tombol install
+  
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+  
+    // tampilkan tombol install
+    installBtn.style.display = "flex";
+  });
+  
+  installBtn.addEventListener("click", async () => {
+    if (!deferredPrompt) return;
+  
+    deferredPrompt.prompt();
+    const choiceResult = await deferredPrompt.userChoice;
+  
+    if (choiceResult.outcome === "accepted") {
+      console.log("User installed the app");
+    } else {
+      console.log("User dismissed the install");
+    }
+  
+    deferredPrompt = null;
+  });
+</script>
+</body>
+</html>

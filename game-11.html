@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Popstar — Game Seru</title>
+<style>
+    html, body {
+        margin:0;
+        padding:0;
+        width:100%;
+        height:100%;
+        background:#111431;
+        font-family:Arial, sans-serif;
+        display:flex;
+        flex-direction:column;
+        justify-content:center;
+        align-items:center;
+        text-align:center;
+    }
+
+    .game-container{
+        width:100vw;
+        flex:1;
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        padding:10px 0;
+    }
+
+    iframe{
+        width:100%;
+        max-width:480px;
+        aspect-ratio:1/1; /* ratio kotak 1:1 */
+        border:none;
+        border-radius:12px;
+        object-fit:contain;
+    }
+
+    .btn-back{
+        margin:10px 0 20px 0;
+        background:#00AEEF;
+        color:white;
+        padding:10px 20px;
+        font-size:16px;
+        border-radius:8px;
+        text-decoration:none;
+        font-weight:bold;
+    }
+</style>
+</head>
+<body>
+
+<div class="game-container">
+    <iframe src="https://funhtml5games.com?embed=popstar" scrolling="no"></iframe>
+</div>
+
+<a class="btn-back" href="gamefw.html">⟵ Kembali</a>
+
+</body>
+</html>

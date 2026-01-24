@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2563eb">
+<link rel="icon" href="ikon-512.png">
+<title>Registrasi</title>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600&display=swap" rel="stylesheet">
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<style>
+  .bg-falling{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    overflow:hidden;
+    z-index:3;
+  }
+  
+  .bg-falling img{
+    position:absolute;
+    top:-120px;
+    object-fit:cover;
+    animation-name: fall;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    will-change: transform, opacity;
+    transform: translateZ(0);
+  }
+  
+  /* glow khusus FUTURE */
+  body.theme-future .bg-falling img{
+  filter:
+    drop-shadow(0 0 8px rgba(34,211,238,.35));
+ }
+  @keyframes fall{
+    from{
+      transform: translate3d(0,-120px,0) rotate(0deg);
+      opacity:0;
+    }
+    to{
+      transform:
+        translate3d(var(--drift),120vh,0)
+        rotate(var(--rotate));
+      opacity:.12;
+    }
+  }
+  
+  /* konten di atas */
+  .page{
+    position:relative;
+    z-index:2;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px 16px; /* 🔥 INI KUNCINYA */
+  }
+  /* ===============================
+     GLOBAL RESET
+  =============================== */
+  *{
+    box-sizing:border-box;
+    font-family:'Nunito',sans-serif;
+    user-select:none;
+    -webkit-user-select:none;
+    outline:none;
+  }
+
+  body{
+    margin:0;
+    min-height:100vh;
+    background:var(--bg);
+    color:var(--text);
+    transition:background .3s ease,color .3s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  /* ===============================
+     ROOT THEME (SAMA DENGAN HALAMAN LAIN)
+  =============================== */
+  :root{
+    --primary:#2563eb;
+    --primary-soft:#dbeafe;
+    --bg:#f8fafc;
+    --card:#ffffff;
+    --text:#0f172a;
+    --muted:#64748b;
+    --danger:#ef4444;
+    --border:#e5e7eb;
+    --radius:18px;
+    --blur:10px;
+    --glow:none;
+  }
+
+  body.theme-dark{
+    --bg:#0b1220;
+    --card:#0f172a;
+    --text:#e5e7eb;
+    --muted:#94a3b8;
+    --primary:#60a5fa;
+    --primary-soft:#1e293b;
+    --border:#1e293b;
+  }
+
+  body.theme-future{
+    --bg:radial-gradient(circle at top,#0b0f1a,#020617);
+    --card:rgba(15,23,42,.65);
+    --text:#e0f2fe;
+    --muted:#7dd3fc;
+    --primary:#22d3ee;
+    --primary-soft:rgba(34,211,238,.12);
+    --danger:#fb7185;
+    --border:rgba(34,211,238,.35);
+    --glow:
+      0 0 12px rgba(34,211,238,.35),
+      0 0 26px rgba(34,211,238,.2);
+  }
+
+  /* ===============================
+     CONTAINER
+  =============================== */
+  .container{
+    width:100%;
+    max-width:420px;
+    margin:0 auto;
+    padding:30px;
+    border-radius:var(--radius);
+    background:var(--card);
+    box-shadow:0 8px 20px rgba(0,0,0,.2);
+    position:relative;
+    overflow:hidden;
+    animation: fadeInUp .6s ease both;
+  }
+
+  /* ANIMASI OPENING */
+  @keyframes fadeInUp{
+    from{
+      opacity:0;
+      transform: translateY(20px);
+    }
+    to{
+      opacity:1;
+      transform: translateY(0);
+    }
+  }
+
+  /* GLASS EFFECT (FUTURE THEME) */
+  body.theme-future .container{
+    backdrop-filter: blur(var(--blur));
+    box-shadow: var(--glow);
+    border:1px solid rgba(34,211,238,.18);
+  }
+  .logo-wrapper{
+    display:flex;
+    justify-content:center;
+    margin-bottom:14px;
+  }
+  
+  .logo-fw{
+    width:90px;
+    height:90px;
+    border-radius:50%;
+    object-fit:cover;
+    animation: spinOnce 1s ease forwards;
+  }
+  
+  /* animasi muter sekali */
+  @keyframes spinOnce{
+    from{ transform:rotate(0deg) scale(.8); opacity:0; }
+    to{ transform:rotate(360deg) scale(1); opacity:1; }
+  }
+  body.theme-future .logo-fw{
+    filter:
+      drop-shadow(0 0 12px rgba(34,211,238,.6))
+      drop-shadow(0 0 28px rgba(34,211,238,.35));
+  }
+
+  h2{
+    text-align:center;
+    margin-bottom:20px;
+    color:var(--primary);
+  }
+  .register-link{
+    margin-top:14px;
+    text-align:center;
+    font-size:13px;
+    color:var(--muted);
+  }
+  
+  .register-link a{
+    color:var(--primary);
+    font-weight:700;
+    text-decoration:none;
+  }
+  
+  .register-link a:hover{
+    text-decoration:underline;
+  }
+
+  form{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  
+  input, select, button {
+    padding:12px 14px;
+    border-radius:12px;
+    border:1px solid var(--border);
+    font-size:14px;
+    background:var(--card);
+    color:var(--text);
+    transition: .3s;
+  }
+  button{
+    background:var(--primary);
+    color:#fff;
+    font-weight:700;
+    cursor:pointer;
+  }
+
+  button:hover{
+    filter:brightness(0.9);
+  }
+  
+  .error { color:red; font-size:12px; }
+  /* ===== CUSTOM GLASS SELECT ===== */
+  .glass-select {
+    position: relative;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--card);
+    cursor: pointer;
+  }
+  
+  .glass-selected {
+    padding: 12px 14px;
+    font-weight: 600;
+  }
+  
+  .glass-options{
+    position:absolute;
+    left:0;
+    right:0;
+    background:var(--primary-soft);
+    border:1px solid var(--border);
+    border-radius:14px;
+    box-shadow:0 12px 30px rgba(0,0,0,.25);
+    z-index:999;
+  
+    opacity:0;
+    pointer-events:none;
+  
+    transform: translateY(10px) scale(.96);
+    transform-origin: top center;
+  
+    transition:
+      opacity .18s ease,
+      transform .26s cubic-bezier(.22,1,.36,1);
+  }
+  
+  /* default → bawah */
+  .glass-options.bottom{
+    top: calc(100% + 8px);
+  }
+  
+  /* flip → atas */
+  .glass-options.top{
+    bottom: calc(100% + 8px);
+    top:auto;
+    transform-origin: bottom center;
+  }
+  
+  /* aktif */
+  .glass-options.show{
+    opacity:1;
+    transform: translateY(0) scale(1);
+    pointer-events:auto;
+  }
+  
+  .glass-options div {
+    padding: 12px 14px;
+  }
+  
+  .glass-options div:hover {
+    background: var(--primary-soft);
+  }
+  
+  .hidden {
+    display: none;
+  }
+  .glass-selected {
+    color: var(--muted);
+  }
+  
+  .glass-selected.selected {
+    color: var(--text);
+    font-weight: 700;
+  }
+  
+  /* FUTURE GLASS EFFECT */
+  body.theme-future .glass-select,
+  body.theme-future .glass-options {
+    backdrop-filter: blur(10px);
+    box-shadow: var(--glow);
+  }
+  /* ===== TOAST ===== */
+  .toast{
+    position:fixed;
+    bottom:30px;
+    left:50%;
+    transform:translateX(-50%) translateY(20px);
+    padding:12px 18px;
+    border-radius:14px;
+    font-weight:600;
+    box-shadow:0 10px 30px rgba(0,0,0,.25);
+    opacity:0;
+    pointer-events:none;
+    transition:.35s ease;
+    z-index:9999;
+  }
+  
+  .toast.show{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+  }
+  
+  /* SUCCESS */
+  .toast.success{
+    background:var(--primary);
+    color:#fff;
+  }
+  
+  /* ERROR */
+  .toast.error{
+    background:rgba(239,68,68,.95);
+    color:#fff;
+  }
+  /* =========================
+     POPUP HELP ADMIN
+  ========================= */
+  .modalOverlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.35);
+    backdrop-filter: blur(6px);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:9999;
+  }
+  
+  .modalOverlay.show{
+    display:flex;
+  }
+  
+  .modalBox{
+    width:90%;
+    max-width:360px;
+    background:var(--card);
+    border-radius:18px;
+    padding:16px;
+    border:1px solid var(--border);
+    box-shadow:0 20px 50px rgba(0,0,0,.35);
+  }
+  
+  .modalTitle{
+    font-weight:700;
+    margin-bottom:8px;
+  }
+  
+  .modalText{
+    font-size:14px;
+    color:var(--muted);
+    margin-bottom:14px;
+  }
+  
+  .modalBtn{
+    width:100%;
+    padding:12px;
+    border-radius:14px;
+    border:none;
+    background:var(--primary);
+    color:#fff;
+    font-weight:700;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+  }
+  
+  .modalBtn svg{
+    width:18px;
+    height:18px;
+  }
+</style>
+</head>
+<body>
+  <div class="bg-falling"></div>
+  <div class="page">
+    <div class="container">
+      <div class="logo-wrapper">
+      <img src="logofw.png" alt="Logo FW" class="logo-fw">
+      </div>
+      <h2>Registrasi</h2>
+      <form id="registerForm">
+  
+        <input id="namaLengkap" placeholder="Nama Lengkap (bebas terserah)" required>
+        <input id="namaID" placeholder="Nama ID (yang dikenali kurir yah...)" required>
+        <label>Role</label>
+        
+        <!-- VALUE ASLI (UNTUK JS & SUBMIT) -->
+        <input type="hidden" id="role" required>
+        
+        <!-- CUSTOM DROPDOWN -->
+        <div class="glass-select from-top" id="roleSelect">
+          <div class="glass-selected">peran kamu di FAMILI apa besti...?</div>
+          <div class="glass-options">
+            <div data-value="Klien">Klien</div>
+            <div data-value="Agen">Agen</div>
+          </div>
+        </div>
+    
+        <input id="email" type="email" placeholder="Email" required>
+        <input id="password" type="password" placeholder="Password (harus ada 6 yah besti...)" required minlength="6">
+        <input id="confirmPassword" type="password" placeholder="Konfirmasi Password" required>
+        <input id="wilayah" placeholder="Wilayah" required>
+    
+        <div id="pengambilanWrap">
+          <label>Pengambilan</label>
+        
+          <!-- VALUE ASLI -->
+          <input type="hidden" id="pengambilan" required>
+        
+          <!-- CUSTOM DROPDOWN -->
+          <div class="glass-select from-bottom" id="pengambilanSelect">
+            <div class="glass-selected">Pilih</div>
+            <div class="glass-options">
+              <div data-value="Kurir">Kurir</div>
+              <div data-value="Agen">Agen</div>
+            </div>
+          </div>
+        </div>
+    
+        <div id="agenWrap" class="hidden">
+          <label>Pilih Agen</label>
+        
+          <!-- VALUE ASLI -->
+          <input type="hidden" id="agen">
+        
+          <!-- CUSTOM DROPDOWN -->
+          <div class="glass-select from-bottom" id="agenSelect">
+            <div class="glass-selected">Pilih Agen</div>
+            <div class="glass-options" id="agenOptions">
+              <!-- diisi via JS -->
+            </div>
+          </div>
+        </div>
+  
+        <div class="error" id="errorMsg"></div>
+        <button type="submit">Register</button>
+        
+        <!-- TOMBOL SUSAH DAFTAR -->
+        <button type="button" id="helpBtn" style="margin-top:10px; background:transparent; border:1px solid var(--border); color:var(--text);">
+          Susah daftar?
+        </button>
+        
+        <div class="register-link">
+          Sudah punya akun? <a href="login.html">Login</a>
+        </div>
+  
+      </form>
+    </div>
+  </div>
+  <!-- TOAST -->
+  <div class="toast" id="toast">Registrasi berhasil! Silakan login.</div>
+  <!-- MODAL HELP ADMIN -->
+  <div id="helpModal" class="modalOverlay">
+    <div class="modalBox">
+      <div class="modalTitle">Susah daftar?</div>
+      <div class="modalText">
+        Kalo kamu susah daftar atau ngga bisa caranya, langsung hubungi admin aja besti.
+      </div>
+      <button id="chatAdminBtn" class="modalBtn">
+        <!-- icon WA -->
+        <svg height="800px" width="800px" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+        	 viewBox="0 0 512 512" xml:space="preserve">
+        <path style="fill:#20A83E;" d="M437.019,74.98C388.668,26.628,324.38,0,256,0S123.333,26.628,74.98,74.98S0,187.62,0,256
+        	c0,51.485,15.154,100.938,43.874,143.34L0.69,500.106c-1.343,3.134-0.607,6.966,1.798,9.381c2.495,2.506,6.519,3.206,9.714,1.684
+        	l96.358-45.885C151.858,495.866,202.721,512,256,512c68.38,0,132.668-26.628,181.019-74.98C485.371,388.667,512,324.38,512,256
+        	S485.371,123.333,437.019,74.98z"/>
+        <circle style="fill:#E5E5E5;" cx="256" cy="256" r="213.333"/>
+        <circle style="fill:#FFFFFF;" cx="256" cy="256" r="187.733"/>
+        <path style="fill:#20A83E;" d="M392.391,342.641l-7.673-41.561c-0.635-3.432-3.295-6.133-6.718-6.818l-60.339-12.067
+        	c-2.802-0.559-5.691,0.317-7.709,2.334l-24.514,24.514c-41.302-18.507-64.226-41.478-84.396-84.555l24.435-24.436
+        	c2.018-2.017,2.893-4.91,2.334-7.708l-12.068-60.34c-0.685-3.423-3.386-6.084-6.819-6.718l-41.561-7.673
+        	c-1.138-0.21-2.31-0.187-3.44,0.07c-10.974,2.494-20.987,8.023-28.956,15.994c-13.801,13.801-19.075,33.938-15.252,58.237
+        	c6.418,40.801,26.409,97.583,63.289,134.61l0.502,0.5c37.001,36.855,93.782,56.846,134.583,63.265
+        	c5.14,0.809,10.092,1.21,14.838,1.21c17.694,0,32.517-5.581,43.4-16.462c7.97-7.971,13.5-17.984,15.993-28.957
+        	C392.578,344.951,392.602,343.78,392.391,342.641z"/>
+        <path style="fill:#189433;" d="M349.996,376.428c-4.747,0-9.698-0.401-14.838-1.21c-40.801-6.419-97.583-26.41-134.583-63.265
+        	l-0.502-0.5c-36.88-37.027-56.87-93.809-63.289-134.61c-3.323-21.118,0.236-39.088,10.283-52.492
+        	c-4.388,2.565-8.458,5.689-12.097,9.328c-13.801,13.801-19.075,33.938-15.252,58.237c6.418,40.801,26.409,97.583,63.289,134.61
+        	l0.502,0.5c37.001,36.855,93.782,56.846,134.583,63.265c5.14,0.809,10.092,1.21,14.838,1.21c17.694,0,32.517-5.581,43.4-16.462
+        	c1.974-1.974,3.797-4.075,5.463-6.284C372.747,373.836,362.037,376.428,349.996,376.428z"/>
+        </svg>
+        Tanya Admin
+      </button>
+    </div>
+  </div>
+
+<script>
+// ===== THEME SYNC DARI PROFIL =====
+  const THEME_KEY = "app-theme";
+  const savedTheme = localStorage.getItem(THEME_KEY);
+
+  if(savedTheme){
+    document.body.classList.add(`theme-${savedTheme}`);
+  } else {
+    document.body.classList.add("theme-light");
+  }
+// ===== Firebase =====
+firebase.initializeApp({
+  apiKey: "AIzaSyCl13_a4x-BQnWNUjf9JOQX1DKc-HxLBys",
+  authDomain: "klien-39696.firebaseapp.com",
+  projectId: "klien-39696"
+});
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// ===== Elements (DATA CONTROLLER) =====
+const role = document.getElementById('role');
+const pengambilanWrap = document.getElementById('pengambilanWrap');
+const pengambilan = document.getElementById('pengambilan');
+const agenInput = document.getElementById("agen");      // hidden input
+const agenWrap  = document.getElementById("agenWrap"); // pembungkus
+const toast = document.getElementById('toast');
+// ===============================
+// ATUR FIELD WAJIB ISI (DINAMIS)
+// ===============================
+function updateRequiredFields() {
+  if (role.value === "Klien") {
+    pengambilan.required = true;
+
+    if (pengambilan.value === "Agen") {
+      agenInput.required = true;
+      agenWrap.classList.remove("hidden");
+    } else {
+      agenInput.required = false;
+      agenInput.value = "";
+      agenWrap.classList.add("hidden");
+    }
+
+  } else {
+    // Role = Agen
+    pengambilan.required = false;
+    pengambilan.value = "";
+
+    document.querySelector("#pengambilanSelect .glass-selected").textContent = "Pilih";
+    document.querySelector("#pengambilanSelect .glass-selected").classList.remove("selected");
+
+    agenInput.required = false;
+    agenInput.value = "";
+    agenWrap.classList.add("hidden");
+  }
+}
+
+// ===== Toast Function =====
+function showToast(msg, type = "success"){
+  toast.textContent = msg;
+  toast.className = `toast show ${type}`;
+
+  clearTimeout(window.toastTimer);
+  window.toastTimer = setTimeout(() => {
+    toast.classList.remove("show");
+  }, 3000);
+}
+
+function initGlassSelect(selectId, hiddenInputId) {
+  const wrap = document.getElementById(selectId);
+  const hidden = document.getElementById(hiddenInputId);
+
+  const selected = wrap.querySelector(".glass-selected");
+  const options = wrap.querySelector(".glass-options");
+
+  wrap.addEventListener("click", (e) => {
+    e.stopPropagation();
+  
+    const isOpen = options.classList.contains("show");
+  
+    document.querySelectorAll(".glass-options").forEach(o => {
+      o.classList.remove("show");
+    });
+  
+    if (!isOpen) {
+      openOptions(wrap, options);
+    }
+  });
+
+  options.querySelectorAll("div").forEach(opt => {
+    opt.addEventListener("click", (e) => {
+      e.stopPropagation();
+
+      const value = opt.dataset.value;
+      hidden.value = value;
+      selected.textContent = value;
+      selected.classList.add("selected");
+
+      options.classList.remove("show");
+      hidden.dispatchEvent(new Event("change"));
+    });
+  });
+
+  // **hapus document click dari sini**
+}
+function openOptions(wrap, options){
+  options.classList.remove("top", "bottom");
+  const spaceBelow = window.innerHeight - wrap.getBoundingClientRect().bottom;
+  const spaceAbove = wrap.getBoundingClientRect().top;
+
+  if (spaceBelow < 200 && spaceAbove > spaceBelow) {
+    options.classList.add("top");
+  } else {
+    options.classList.add("bottom");
+  }
+
+  requestAnimationFrame(() => {
+    options.classList.add("show");
+  });
+}
+initGlassSelect("roleSelect", "role");
+initGlassSelect("pengambilanSelect", "pengambilan");
+updateRequiredFields();
+
+document.addEventListener("click", () => {
+  document.querySelectorAll(".glass-options").forEach(opt => {
+    opt.classList.remove("show");
+  });
+});
+// ===== Load Agen =====
+const agenOptions = document.getElementById("agenOptions");
+
+fetch('https://opensheet.vercel.app/1OfH6ehK2WeQkjZILoVhBUTFSI-4HeTLuF_OM0JiekFo/Agen')
+.then(r => r.json())
+.then(data => {
+  data.forEach(a => {
+    const div = document.createElement("div");
+    div.dataset.value = a["Nama Agen"];
+    div.textContent = a["Nama Agen"];
+    agenOptions.appendChild(div);
+  });
+
+  // refresh listener
+  initGlassSelect("agenSelect", "agen");
+  updateRequiredFields();
+});
+
+// ===== Role Change =====
+role.addEventListener('change', () => {
+  if (role.value === 'Agen') {
+    pengambilanWrap.classList.add('hidden');
+    agenWrap.classList.add('hidden');
+
+    // RESET pengambilan
+    pengambilan.value = "";
+    document.querySelector("#pengambilanSelect .glass-selected").textContent = "Pilih";
+    document.querySelector("#pengambilanSelect .glass-selected").classList.remove("selected");
+
+  } else {
+    pengambilanWrap.classList.remove('hidden');
+  }
+
+  updateRequiredFields();
+});
+
+// ===== Pengambilan Change =====
+pengambilan.addEventListener('change', () => {
+  document.getElementById("agenWrap")
+    .classList.toggle("hidden", pengambilan.value !== "Agen");
+
+  if (pengambilan.value !== "Agen") {
+    document.getElementById("agen").value = "";
+    document.querySelector("#agenSelect .glass-selected").textContent = "Pilih Agen";
+    document.querySelector("#agenSelect .glass-selected").classList.remove("selected");
+  }
+
+  updateRequiredFields();
+});
+
+// ===== Submit =====
+  document.getElementById('registerForm').addEventListener('submit', async e => {
+    e.preventDefault();
+  
+    const errorMsg = document.getElementById("errorMsg");
+    errorMsg.textContent = "";
+  
+    // Ambil value
+    const roleValue = role.value;
+    const pengambilanValue = pengambilan.value;
+    const agenValue = document.getElementById("agen").value || "";
+  
+    const namaLengkap = document.getElementById('namaLengkap').value.trim();
+    const namaID = document.getElementById('namaID').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    const wilayah = document.getElementById('wilayah').value.trim();
+  
+    // Validasi
+    if (!roleValue) {
+      showToast("Pilih dulu peran kamu ya 🙂", "error");
+      return;
+    }
+  
+    if (roleValue === "Klien" && !pengambilanValue) {
+      showToast("Metode pengambilan belum dipilih", "error");
+      return;
+    }
+  
+    if (roleValue === "Klien" && pengambilanValue === "Agen" && !agenValue) {
+      showToast("Pilih agen dulu biar jelas ✨", "error");
+      return;
+    }
+  
+    if (password !== confirmPassword) {
+      showToast("Password dan konfirmasi belum sama 😬", "error");
+      return;
+    }
+  
+    try {
+      const cred = await auth.createUserWithEmailAndPassword(email, password);
+      const uid = cred.user.uid;
+  
+      if (roleValue === "Agen") {
+        await db.collection("agens").doc(uid).set({
+          namaLengkap,
+          namaID,
+          email,
+          wilayah,
+          point: 0,
+          orderGift: 0,
+          orderTime: new Date(),
+          status: "pending"
+        });
+      } else {
+        await db.collection("members").doc(uid).set({
+          namaLengkap,
+          namaID,
+          email,
+          wilayah,
+          pengambilan: pengambilanValue,
+          agen: agenValue,
+          point: 0,
+          orderGift: 0,
+          orderTime: new Date(),
+          status: "pending"
+        });
+      }
+  
+      showToast("Registrasi berhasil 🎉 Sebentar ya, diarahkan ke login", "success");
+      setTimeout(() => {
+        window.location.href = "login.html";
+      }, 2000);
+  
+    } catch (err) {
+      let msg = "Terjadi kesalahan. Coba lagi ya 🙏";
+  
+      if (err.code === "auth/email-already-in-use") {
+        msg = "Email ini sudah terdaftar";
+      } else if (err.code === "auth/invalid-email") {
+        msg = "Format emailnya belum benar";
+      } else if (err.code === "auth/weak-password") {
+        msg = "Password minimal 6 karakter ya";
+      }
+  
+      showToast(msg, "error");
+    }
+  });
+/*LOGO JATUH*/
+    const bg = document.querySelector(".bg-falling");
+    let TOTAL_LOGO = 13; // ✅ pakai let
+    /*JIKA HP KENTANG*/
+    if (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) {
+      TOTAL_LOGO = 7;
+    }
+
+  for(let i = 0; i < TOTAL_LOGO; i++){
+    const img = document.createElement("img");
+    img.src = "logo.png";
+  
+    const size = Math.random() * 40 + 25;
+    const left = Math.random() * 100;
+    const duration = Math.random() * 12 + 8;
+    const delay = Math.random() * -20;
+    const drift = (Math.random() * 120 - 60) + "px";
+    const rotate = (Math.random() * 720 - 360) + "deg";
+  
+    img.style.width = size + "px";
+    img.style.left = left + "%";
+    img.style.animationDuration = duration + "s";
+    img.style.animationDelay = delay + "s";
+  
+    // 🌌 OPACITY ACAK (LETANYA DI SINI)
+    img.style.opacity = Math.random() * 0.15 + 0.05;
+  
+    img.style.setProperty("--drift", drift);
+    img.style.setProperty("--rotate", rotate);
+  
+    bg.appendChild(img);
+  }
+  /* 🔥 MATIKAN ANIMASI SAAT TAB TIDAK AKTIF */
+  document.addEventListener("visibilitychange", () => {
+  bg.style.display = document.hidden ? "none" : "block";
+  });
+  // ===== HELP ADMIN POPUP =====
+  const helpBtn = document.getElementById("helpBtn");
+  const helpModal = document.getElementById("helpModal");
+  const chatAdminBtn = document.getElementById("chatAdminBtn");
+  
+  helpBtn.addEventListener("click", () => {
+    helpModal.classList.add("show");
+  });
+  
+  // klik area luar untuk tutup
+  helpModal.addEventListener("click", (e) => {
+    if (e.target === helpModal) {
+      helpModal.classList.remove("show");
+    }
+  });
+  
+  // WA link
+  chatAdminBtn.addEventListener("click", () => {
+    const wa = "https://wa.me/6281223836601?text=Halo%20Admin%20FAMILI%20WATER%3F";
+    window.location.href = wa;
+  });
+  
+</script>
+
+</body>
+</html>

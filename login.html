@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#2563eb">
+<link rel="icon" href="/ikon-512.png">
+<title>Login Member</title>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600&display=swap" rel="stylesheet">
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+
+<style>
+  .bg-falling{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    overflow:hidden;
+    z-index:3;
+  }
+  
+  .bg-falling img{
+    position:absolute;
+    top:-120px;
+    object-fit:cover;
+    animation-name: fall;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    will-change: transform, opacity;
+    transform: translateZ(0);
+  }
+  
+  /* glow khusus FUTURE */
+  body.theme-future .bg-falling img{
+  filter:
+    drop-shadow(0 0 8px rgba(34,211,238,.35));
+ }
+  @keyframes fall{
+    from{
+      transform: translate3d(0,-120px,0) rotate(0deg);
+      opacity:0;
+    }
+    to{
+      transform:
+        translate3d(var(--drift),120vh,0)
+        rotate(var(--rotate));
+      opacity:.12;
+    }
+  }
+  
+  /* konten di atas */
+  .page{
+    position:relative;
+    z-index:2;
+    background:transparent;
+  }
+  /* ===============================
+     GLOBAL RESET
+  =============================== */
+  *{
+    box-sizing:border-box;
+    font-family:'Nunito',sans-serif;
+    user-select:none;
+    -webkit-user-select:none;
+    outline:none;
+  }
+
+  body{
+    margin:0;
+    min-height:100vh;
+    background:var(--bg);
+    color:var(--text);
+    transition:background .3s ease,color .3s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  /* ===============================
+     ROOT THEME (SAMA DENGAN HALAMAN LAIN)
+  =============================== */
+  :root{
+    --primary:#2563eb;
+    --primary-soft:#dbeafe;
+    --bg:#f8fafc;
+    --card:#ffffff;
+    --text:#0f172a;
+    --muted:#64748b;
+    --danger:#ef4444;
+    --border:#e5e7eb;
+    --radius:18px;
+    --blur:10px;
+    --glow:none;
+  }
+
+  body.theme-dark{
+    --bg:#0b1220;
+    --card:#0f172a;
+    --text:#e5e7eb;
+    --muted:#94a3b8;
+    --primary:#60a5fa;
+    --primary-soft:#1e293b;
+    --border:#1e293b;
+  }
+
+  body.theme-future{
+    --bg:radial-gradient(circle at top,#0b0f1a,#020617);
+    --card:rgba(15,23,42,.65);
+    --text:#e0f2fe;
+    --muted:#7dd3fc;
+    --primary:#22d3ee;
+    --primary-soft:rgba(34,211,238,.12);
+    --danger:#fb7185;
+    --border:rgba(34,211,238,.35);
+    --glow:
+      0 0 12px rgba(34,211,238,.35),
+      0 0 26px rgba(34,211,238,.2);
+  }
+
+  /* ===============================
+     CONTAINER
+  =============================== */
+  .container{
+    width:100%;
+    max-width:420px;
+    margin:0 auto;
+    padding:30px;
+    border-radius:var(--radius);
+    background:var(--card);
+    box-shadow:0 8px 20px rgba(0,0,0,.2);
+    position:relative;
+    overflow:hidden;
+    animation: fadeInUp .6s ease both;
+  }
+
+  /* ANIMASI OPENING */
+  @keyframes fadeInUp{
+    from{
+      opacity:0;
+      transform: translateY(20px);
+    }
+    to{
+      opacity:1;
+      transform: translateY(0);
+    }
+  }
+
+  /* GLASS EFFECT (FUTURE THEME) */
+  body.theme-future .container{
+    backdrop-filter: blur(var(--blur));
+    box-shadow: var(--glow);
+    border:1px solid rgba(34,211,238,.18);
+  }
+  .logo-wrapper{
+    display:flex;
+    justify-content:center;
+    margin-bottom:14px;
+  }
+  
+  .logo-fw{
+    width:90px;
+    height:90px;
+    border-radius:50%;
+    object-fit:cover;
+    animation: spinOnce 1s ease forwards;
+  }
+  
+  /* animasi muter sekali */
+  @keyframes spinOnce{
+    from{ transform:rotate(0deg) scale(.8); opacity:0; }
+    to{ transform:rotate(360deg) scale(1); opacity:1; }
+  }
+  body.theme-future .logo-fw{
+    filter:
+      drop-shadow(0 0 12px rgba(34,211,238,.6))
+      drop-shadow(0 0 28px rgba(34,211,238,.35));
+  }
+
+  h2{
+    text-align:center;
+    margin-bottom:20px;
+    color:var(--primary);
+  }
+
+  form{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+
+  input, button{
+    padding:12px 14px;
+    border-radius:12px;
+    border:1px solid var(--border);
+    font-size:14px;
+    background:var(--card);
+    color:var(--text);
+    transition: .3s;
+  }
+
+  input:focus{
+    outline:none;
+    border-color:var(--primary);
+    box-shadow:0 0 0 4px var(--primary-soft);
+  }
+
+  button{
+    background:var(--primary);
+    color:#fff;
+    font-weight:700;
+    cursor:pointer;
+  }
+
+  button:hover{
+    filter:brightness(0.9);
+  }
+
+  .error{
+    color:var(--danger);
+    font-size:12px;
+  }
+    button{
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+  }
+  
+  .btn-loader{
+    width:18px;
+    height:18px;
+    border:3px solid rgba(255,255,255,.3);
+    border-top-color:#fff;
+    border-radius:50%;
+    animation:spin .8s linear infinite;
+    display:none;
+  }
+  
+  button.loading .btn-text{
+    opacity:.6;
+  }
+  
+  button.loading .btn-loader{
+    display:block;
+  }
+  
+  button.loading{
+    pointer-events:none;
+    filter:brightness(.9);
+  }
+  
+  @keyframes spin{
+    to{ transform:rotate(360deg); }
+  }
+  .register-link{
+    margin-top:14px;
+    text-align:center;
+    font-size:13px;
+    color:var(--muted);
+  }
+  
+  .register-link a{
+    color:var(--primary);
+    font-weight:700;
+    text-decoration:none;
+  }
+  
+  .register-link a:hover{
+    text-decoration:underline;
+  }
+
+  /* BACKGROUND (kaya gradient) */
+  .page{
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+    background: var(--bg);
+  }
+  /* TOAST POPUP */
+   .toast{
+    position: fixed;
+    top: 20px; /* titik referensi */
+    left: 50%;
+    transform: translateX(-50%) translateY(-10px); /* 🔥 awal agak ke atas */
+    padding: 12px 16px;
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.18);
+    border:1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    font-weight:600;
+    opacity:0;
+    pointer-events:none;
+    transition:
+      opacity .25s ease,
+      transform .25s ease;
+    z-index: 999;
+  }
+  
+  /* muncul */
+  .toast.show{
+    opacity:1;
+    transform: translateX(-50%) translateY(20px); /* 🔥 muncul lebih kebawah */
+  }
+  
+  /* error warna */
+  .toast.error{
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+</style>
+</head>
+<body>
+<div class="bg-falling"></div>
+<div class="page">
+  <div class="container">
+    <div class="logo-wrapper">
+    <img src="logofw.png" alt="Logo FW" class="logo-fw">
+    </div>
+    <h2>Login Member</h2>
+    <form id="loginForm">
+      <input type="email" id="email" placeholder="Email" required />
+      <input type="password" id="password" placeholder="Password" required />
+      <div class="error" id="errorMsg"></div>
+      <button type="submit" id="loginBtn">
+        <span class="btn-text">Login</span>
+        <span class="btn-loader"></span>
+      </button>
+      <div class="register-link">
+      Belum punya akun? <a href="register.html">Daftar</a>
+      </div>
+    </form>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+<script>
+  // ===== THEME SYNC DARI PROFIL =====
+  const THEME_KEY = "app-theme";
+  const savedTheme = localStorage.getItem(THEME_KEY);
+
+  if(savedTheme){
+    document.body.classList.add(`theme-${savedTheme}`);
+  } else {
+    document.body.classList.add("theme-light");
+  }
+
+  // ===== Firebase Setup =====
+  const firebaseConfig = {
+    apiKey: "AIzaSyCl13_a4x-BQnWNUjf9JOQX1DKc-HxLBys",
+    authDomain: "klien-39696.firebaseapp.com",
+    projectId: "klien-39696",
+    storageBucket: "klien-39696.firebasestorage.app",
+    messagingSenderId: "434516298894",
+    appId: "1:434516298894:web:fad97694415bd4237acddf"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+  const messaging = firebase.messaging();
+
+  // ===== REGISTER SERVICE WORKER =====
+   async function registerSW() {
+    if ('serviceWorker' in navigator) {
+      try {
+        await navigator.serviceWorker.register('/service-worker.js');
+        console.log("PWA SW registered");
+      } catch (err) {
+        console.log("PWA SW gagal:", err);
+      }
+  
+      try {
+        await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+        console.log("FCM SW registered");
+      } catch (err) {
+        console.log("FCM SW gagal:", err);
+      }
+    }
+  }
+
+  // ===== Fungsi untuk minta izin notif & simpan token =====
+  async function requestNotificationPermission(uid, role) {
+    try {
+      await registerSW(); // <<< ini tetap dipakai
+
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") return;
+
+      const token = await messaging.getToken({
+        vapidKey: "BIGABqP1dfREWvaf-a0yI5KvxSsxYSMtjyFIqq8HpTxA7gk6WqIxW4Ypiu0NEfucoxNJZotR0ZxYt-wgWMpIJF4"
+      });
+
+      if (!token) return;
+
+      // simpan token ke document yang sesuai
+      await db.collection(role === "agen" ? "agens" : "members").doc(uid).update({
+        fcmToken: token
+      });
+
+    } catch (err) {
+      console.log("Notif gagal:", err);
+    }
+  }
+
+  // ===== LOGIN =====
+  const loginForm = document.getElementById('loginForm');
+
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+  
+    const loginBtn = document.getElementById("loginBtn");
+    loginBtn.classList.add("loading");
+  
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+  
+    try {
+      const userCredential = await auth.signInWithEmailAndPassword(email, password);
+      const uid = userCredential.user.uid;
+  
+      // ======= cek role =======
+      let userDoc = await db.collection('members').doc(uid).get();
+      let role = "member";
+  
+      if (!userDoc.exists) {
+        userDoc = await db.collection('agens').doc(uid).get();
+        role = "agen";
+      }
+  
+      if (!userDoc.exists) {
+        showToast("Akun tidak ditemukan!");
+        await auth.signOut();
+        loginBtn.classList.remove("loading");
+        return;
+      }
+  
+      const status = userDoc.data().status || "pending";
+      if (status !== "approved") {
+        showToast("Akun Anda masih pending. Silahkan tunggu approval admin.");
+        await auth.signOut();
+        loginBtn.classList.remove("loading");
+        return;
+      }
+  
+      // simpan role
+      localStorage.setItem("role", role);
+  
+      // ===== request notif setelah role ketemu =====
+      await requestNotificationPermission(uid, role);
+  
+      window.location.href = "index.html";
+  
+    } catch (err) {
+      let msg = "Password atau email salah";
+      if(err.code === "auth/wrong-password") msg = "Password salah";
+      if(err.code === "auth/user-not-found") msg = "Email tidak terdaftar";
+      showToast(msg, "error");
+      loginBtn.classList.remove("loading");
+    }
+  });
+
+  // ===== TOAST =====
+  function showToast(message, type = "error"){
+    const toast = document.getElementById("toast");
+    toast.innerText = message;
+    toast.className = "toast show " + type;
+
+    setTimeout(() => {
+      toast.className = "toast " + type;
+    }, 5000);
+  }
+</script>
+</body>
+</html>

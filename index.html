@@ -1,0 +1,1769 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#2563eb">
+<link rel="icon" href="/ikon-512.png">
+<title>Dashboard Member</title>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+
+<style>
+/* ===============================
+   GLOBAL RESET
+=============================== */
+*{
+  box-sizing:border-box;
+  font-family:'Nunito',sans-serif;
+  user-select:none;
+  -webkit-user-select:none;
+  outline:none;
+}
+
+body{
+  margin:0;
+  min-height:100vh;
+  background:var(--bg);
+  color:var(--text);
+  transition:background .3s ease,color .3s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* ===============================
+   THEME ENGINE
+=============================== */
+:root{
+  --primary:#2563eb;
+  --primary-soft:#dbeafe;
+  --bg:#f8fafc;
+  --card:#ffffff;
+  --text:#0f172a;
+  --muted:#64748b;
+  --danger:#ef4444;
+  --border:#e5e7eb;
+  --radius:18px;
+  --blur:10px;
+  --glow:none;
+}
+
+body.theme-dark{
+  --bg:#0b1220;
+  --card:#0f172a;
+  --text:#e5e7eb;
+  --muted:#94a3b8;
+  --primary:#60a5fa;
+  --primary-soft:#1e293b;
+  --border:#1e293b;
+}
+
+body.theme-future{
+  --bg:radial-gradient(circle at top,#0b0f1a,#020617);
+  --card:rgba(15,23,42,.65);
+  --text:#e0f2fe;
+  --muted:#7dd3fc;
+  --primary:#22d3ee;
+  --primary-soft:rgba(34,211,238,.12);
+  --danger:#fb7185;
+  --border:rgba(34,211,238,.35);
+  --glow:
+    0 0 12px rgba(34,211,238,.35),
+    0 0 26px rgba(34,211,238,.2);
+}
+
+/* ===============================
+   HEADER
+=============================== */
+.header{
+  height:220px;
+  background:var(--primary);
+  border-radius:0 0 32px 32px;
+}
+
+body.theme-dark .header{
+  background:#020617;
+}
+
+body.theme-future .header{
+  background:
+    radial-gradient(circle at top,rgba(34,211,238,.35),transparent 60%),
+    linear-gradient(135deg,#020617,#020617);
+}
+
+  /* ===============================
+     DASHBOARD CARD
+  =============================== */
+  .dashboard{
+    display:none;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:20px;
+    margin:-120px 16px 0;
+    padding:16px;
+    max-width:720px;
+    width:calc(100% - 32px);
+    position:relative;
+    z-index:5;
+    box-shadow:0 12px 26px rgba(0,0,0,.08);
+  }
+  
+  /* blur hanya futuristik */
+  body.theme-future .dashboard{
+    backdrop-filter:blur(var(--blur));
+    box-shadow:0 18px 36px rgba(0,0,0,.25),var(--glow);
+  }
+
+  /* ===== GLOBAL CLICK EFFECT (Timbul saat klik) ===== */
+  .btn,
+  .nav-item,
+  .nav-wa,
+  .nav-avatar,
+  button {
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+
+  .btn:active,
+  button:active,
+  .nav-item:active,
+  .nav-wa:active,
+  .nav-avatar:active {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0,0,0,.25), var(--glow);
+  }
+
+  /* logo bulat timbul */
+  .logo-circle {
+    width:96px;
+    height:96px;
+    border-radius:50%;
+    background:#fff;
+    border:1px solid #fff;
+    position:absolute;
+    top:-48px;
+    left:16px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    box-shadow:0 10px 20px rgba(0,0,0,0.25);
+    animation: spin 2s infinite alternate;
+  }
+  @keyframes spin {
+    0% { transform: translateY(0) rotate(-10deg); }
+    100% { transform: translateY(-8px) rotate(10deg); }
+  }
+
+  .logo-circle img {
+    width:72px;
+    height:72px;
+    border-radius:50%;
+    object-fit:cover;
+  }
+
+  h1 {
+    font-size:22px;
+    margin:14px 0 4px;
+    font-weight:700;
+    color:var(--text);
+    padding-top: 20px;
+  }
+
+  .date-text {
+    font-size:14px;
+    color:var(--muted);
+    margin-bottom:10px;
+  }
+
+  .friendly-anim {
+    animation: appear 0.8s ease-out;
+  }
+  @keyframes appear {
+    from { opacity:0; transform: translateY(8px); }
+    to { opacity:1; transform: translateY(0); }
+  }
+
+  .desc {
+    font-size:20px;
+    color:var(--muted);
+    margin-bottom:12px;
+  }
+
+  .card-inner {
+    background:var(--primary-soft);
+    border-radius:16px;
+    padding:14px;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
+    transition: .35s ease;
+  }
+
+  /* ===== PROFILE ROW ===== */
+  .profile-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:10px;
+  }
+
+  .profile-left{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+
+  .profile-name-block{
+    display:flex;
+    flex-direction:column;
+  }
+
+  .profile-sub{
+    font-size:14px;
+    color:var(--muted);
+    margin-top:4px;
+  }
+
+  /* ===== ICON + BUTTON ===== */
+  .input-direct-wrap{
+    display:flex;
+    align-items:center;
+  }
+
+  .btn-input-direct{
+    width:44px;
+    height:44px;
+    border-radius:14px;
+    border:1px solid var(--border);
+    background: var(--card);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+    transition: transform .2s ease, background .2s ease, box-shadow .2s ease;
+  }
+
+  .btn-input-direct:hover{
+    transform: translateY(-2px);
+    background: var(--primary-soft);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.18);
+  }
+
+  .btn-input-direct:active{
+    transform: translateY(0px);
+  }
+
+  .btn-input-direct svg{
+    width:22px;
+    height:22px;
+    fill:none;
+    stroke: var(--primary);
+    stroke-width:2;
+    stroke-linecap:round;
+  }
+
+  .avatar{
+    width:60px;
+    height:60px;
+    border-radius:50%;
+    background:#e5e7eb;
+    object-fit:cover;
+  }
+  .nama {
+    font-weight:700;
+    font-size:16px;
+    color:var(--text);
+  }
+
+  .status-row {
+    margin-top:10px;
+    padding:12px;
+    border-radius:14px;
+    background:var(--card);
+    border:1px solid var(--border);
+  }
+
+  .status-row b {
+    display:block;
+    font-size:16px;
+    margin-bottom:6px;
+    color:var(--primary);
+  }
+    /* ===============================
+     STOCK FOTO SLIDER
+  =============================== */
+  .stock-slider-card{
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    margin: 24px 16px 0;
+    padding: 12px;
+    max-width: 720px;
+    width: calc(100% - 32px);
+    box-shadow: 0 12px 28px rgba(0,0,0,.08), var(--glow);
+    backdrop-filter: blur(var(--blur));
+  }
+  
+  .stock-slider{
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    border-radius: 16px;
+    gap: 0;
+    scrollbar-width: none;
+  }
+  .stock-slider::-webkit-scrollbar{
+    display:none;
+  }
+  
+  .stock-slide{
+    min-width: 100%;
+    aspect-ratio: 3 / 1;
+    scroll-snap-align: start;
+    position: relative;
+  }
+  
+  .stock-slide img{
+    width:100%;
+    height:100%;
+    object-fit: cover;
+    border-radius: 14px;
+  }
+  
+  /* DOT */
+  .slider-dots{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    margin-top:10px;
+  }
+  
+  .slider-dot{
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background: var(--border);
+    transition: .25s ease;
+  }
+  
+  .slider-dot.active{
+    background: var(--primary);
+    box-shadow: var(--glow);
+  }
+
+  /* ===== GIFT LIST ===== */
+  .gift-card {
+    position: relative;
+    background: var(--card);
+    box-shadow: 0 12px 28px rgba(0,0,0,.08), var(--glow);
+    backdrop-filter: blur(var(--blur));
+    margin: 40px 16px 40px;
+    border-radius: 20px;
+    padding: 60px 16px 16px; /* padding atas besar supaya tidak ketutup title */
+    max-width: 720px;
+    width: calc(100% - 32px);
+  }
+
+  .gift-title {
+    position: absolute;
+    top: -20px; /* ini bikin setengah keluar */
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 12px 28px rgba(0,0,0,.08), var(--glow);
+    padding: 12px 18px;
+    border-radius: 16px;
+    font-weight: 700;
+    text-align: center;
+    color: var(--text);
+  }
+
+  .gift-container{
+    display:flex;
+    justify-content: center;
+    flex-wrap:wrap;
+    gap:14px;
+  }
+
+  .gift-item{
+    background: var(--primary-soft);
+    border-radius: 16px;
+    padding:12px;
+    width: calc(50% - 14px);
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
+  }
+
+  .gift-card img {
+    width:100%;
+    height:110px;
+    object-fit:cover;
+    border-radius:10px;
+    margin-bottom:8px;
+  }
+
+  .gift-card button {
+    margin-top:10px;
+    padding:8px 10px;
+    border:none;
+    border-radius:10px;
+    background:var(--primary);
+    color:#fff;
+    font-weight:700;
+    cursor:pointer;
+    width:100%;
+    transition: transform .2s ease, filter .2s ease;
+  }
+
+  .gift-card button:hover{
+    transform: translateY(-2px);
+    filter: brightness(1.05);
+  }
+
+  .gift-item p{
+    margin:0;
+    font-size:14px;
+    color:var(--text);
+  }
+
+  #timerText {
+    color:#ff0000;
+    font-weight:700;
+    margin-top:10px;
+  }
+
+  #batalOrderBtn {
+    display:none;
+    margin-top:10px;
+    padding:10px;
+    border:none;
+    border-radius:12px;
+    background:#f97316;
+    color:#fff;
+    font-weight:700;
+    cursor:pointer;
+    transition: transform .2s ease, filter .2s ease;
+  }
+
+  #batalOrderBtn:hover{
+    transform: translateY(-2px);
+    filter: brightness(1.05);
+  }
+
+  /* ===== POPUP ===== */
+  .popup-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(var(--blur));
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+
+  .popup {
+    background: var(--card);
+    padding: 18px;
+    border-radius: var(--radius);
+    width: 90%;
+    max-width: 420px;
+    text-align: left;
+    position: relative;
+    border: 1px solid var(--border);
+    box-shadow: var(--glow), 0 18px 45px rgba(0,0,0,0.35);
+    overflow: hidden;
+  }
+
+  .popup::before {
+    content: "";
+    position: absolute;
+    top: -70px;
+    right: -70px;
+    width: 180px;
+    height: 180px;
+    background: radial-gradient(circle at center,
+      var(--primary-soft),
+      rgba(255,255,255,0)
+    );
+    transform: rotate(20deg);
+    opacity: 0.9;
+  }
+
+  .popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .popup-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 0.2px;
+    color: var(--text);
+  }
+
+  .close-popup {
+    cursor: pointer;
+    font-weight: 900;
+    font-size: 22px;
+    color: var(--text);
+    padding: 6px 10px;
+    border-radius: 12px;
+    transition: 0.2s;
+  }
+
+  .close-popup:hover {
+    background: rgba(255,255,255,0.08);
+  }
+
+  .popup-img-wrap {
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+
+  .popup img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .popup-body {
+    padding: 0 4px 2px 4px;
+  }
+
+  .popup-info {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    margin-bottom: 10px;
+  }
+
+  .popup-info .label {
+    font-size: 13px;
+    opacity: 0.7;
+    color: var(--muted);
+  }
+
+  .popup-info .value {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  .popup-desc {
+    font-size: 14px;
+    opacity: 0.9;
+    line-height: 1.5;
+    margin: 0 0 14px 0;
+    color: var(--text);
+  }
+
+  .btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--primary), #ff9913);
+    color: #fff;
+  }
+
+  .btn-primary:hover {
+    filter: brightness(1.05);
+  }
+
+  .btn-cancel {
+    background: rgba(255,255,255,0.08);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .btn-cancel:hover {
+    background: rgba(255,255,255,0.12);
+  }
+
+  .confirm-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 6px;
+  }
+
+  .confirm-buttons .btn {
+    width: 50%;
+  }
+  /* ===============================
+     INSTALL POPUP (slide from top)
+  =============================== */
+  .install-popup-overlay{
+    display:none;
+    position:fixed;
+    top:0; left:0;
+    width:100%;
+    height:100%;
+    z-index: 9999;
+  }
+  
+  .install-popup{
+    position:fixed;
+    top:-120px;
+    left:50%;
+    transform:translateX(-50%);
+    width: 92%;
+    max-width: 420px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: 0 18px 45px rgba(0,0,0,.35), var(--glow);
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    padding: 12px;
+    animation: slideDown 0.6s ease forwards;
+  }
+  
+  @keyframes slideDown{
+    to { top: 14px; }
+  }
+  
+  .install-icon{
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border);
+    background: #fff;
+  }
+  
+  .install-title{
+    font-weight: 800;
+    font-size: 16px;
+    color: var(--text);
+  }
+  
+  .install-sub{
+    font-size: 12px;
+    color: var(--muted);
+  }
+  
+  .install-btn{
+    padding: 10px 14px;
+    border-radius: 14px;
+    border: none;
+    background: linear-gradient(135deg, var(--primary), #ff9913);
+    color: #fff;
+    font-weight: 800;
+    cursor:pointer;
+    box-shadow: 0 10px 18px rgba(0,0,0,.25);
+  }
+
+  /* ===== ALERT POPUP ===== */
+  .alert-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(var(--blur));
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+  }
+
+  .alert-box {
+    width: 90%;
+    max-width: 380px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    box-shadow: var(--glow), 0 18px 45px rgba(0,0,0,0.35);
+    overflow: hidden;
+    position: relative;
+  }
+  .alert-box button{
+    margin-top:10px;
+  }
+
+  .alert-box::before {
+    content:"";
+    position:absolute;
+    width:180px;
+    height:180px;
+    top:-80px;
+    right:-80px;
+    background: radial-gradient(circle at center,
+      var(--primary-soft),
+      rgba(255,255,255,0)
+    );
+    transform: rotate(20deg);
+    opacity: 0.9;
+  }
+
+  .alert-header {
+    display:flex;
+    justify-content: space-between;
+    align-items:center;
+    margin-bottom: 8px;
+  }
+
+  .alert-header #alertTitle{
+    font-weight: 800;
+    font-size: 16px;
+    color: var(--text);
+  }
+
+  .close-alert {
+    cursor: pointer;
+    font-size: 20px;
+    font-weight: 900;
+    padding: 6px 10px;
+    border-radius: 12px;
+    color: var(--text);
+  }
+
+  .close-alert:hover{
+    background: rgba(255,255,255,0.08);
+  }
+
+  .alert-body{
+    font-size: 14px;
+    color: var(--text);
+    opacity: 0.9;
+    margin-bottom: 10px;
+  }
+
+  /* ===============================
+     BOTTOM NAVBAR
+  ============================== */
+  .navbar{
+    position:fixed;
+    bottom:14px;
+    left:14px;
+    right:14px;
+    height:70px;
+    background:var(--card);
+    border-radius:24px;
+    border:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 12px;
+    box-shadow:
+      0 14px 40px rgba(0,0,0,.25),
+      var(--glow);
+    backdrop-filter:blur(var(--blur));
+    z-index:999;
+  }
+
+  /* ITEM */
+  .nav-item{
+    flex:1;
+    text-align:center;
+    text-decoration:none;
+    color:var(--muted);
+    font-size:11px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+    transition:.25s ease;
+  }
+
+  .nav-item svg{
+    width:22px;
+    height:22px;
+    fill:currentColor;
+  }
+
+  /* ACTIVE */
+  .nav-item.active{
+    color:var(--primary);
+  }
+
+  .nav-item.active svg{
+    filter:drop-shadow(0 0 6px rgba(0,0,0,.2));
+  }
+
+  /* WHATSAPP SPECIAL BUTTON */
+  .nav-wa{
+    width:64px;
+    height:64px;
+    margin-top:-34px;
+    background:linear-gradient(135deg,#22c55e,#16a34a);
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:
+      0 14px 40px rgba(34,197,94,.6),
+      var(--glow);
+    border:4px solid var(--card);
+  }
+
+  .nav-wa img{
+    width:34px;
+    height:34px;
+    border-radius:50%;
+  }
+
+  /* ===============================
+     NAVBAR PROFILE AVATAR
+  ================================ */
+  .nav-avatar{
+    width:26px;
+    height:26px;
+    border-radius:50%;
+    background:#e5e7eb;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    border:2px solid var(--card);
+  }
+
+  .nav-avatar img{
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+    object-fit: cover;
+    border: 2px solid var(--primary);
+  }
+
+  .nav-avatar-icon{
+    width:18px;
+    height:18px;
+    fill:currentColor;
+  }
+
+  /* ACTIVE STATE */
+  .nav-item.active .nav-avatar{
+    box-shadow:
+      0 0 0 2px var(--primary),
+      var(--glow);
+  }
+
+  /* ===============================
+     NAVBAR AUTO HIDE ON SCROLL
+  ================================ */
+  .navbar{
+    transition:
+      transform .35s cubic-bezier(.4,0,.2,1),
+      opacity .25s ease;
+  }
+
+  /* HIDDEN STATE */
+  .navbar.hide{
+    transform: translateY(120%);
+    opacity: 0;
+  }
+
+  /* FUTURISTIC BOOST */
+  body.theme-future .nav-wa{
+    box-shadow:
+      0 0 18px rgba(34,197,94,.8),
+      0 0 40px rgba(34,197,94,.6);
+  }
+
+  /* ===== RESPONSIVE MOBILE ===== */
+  @media (max-width: 480px) {
+    .header { height: 200px; }
+    .dashboard { margin: -110px 12px 0; width: calc(100% - 24px); }
+    .logo-circle { left: 12px; width: 88px; height: 88px; }
+    h1 { font-size: 20px; }
+    .gift-item { width: calc(50% - 14px); }
+    .gift-card { padding-bottom: 150px; }
+    .navbar { height: 68px; bottom: 10px; left: 10px; right: 10px; }
+    .nav-item span { font-size: 10px; }
+  }
+    /* ===============================
+     TABLET & LANDSCAPE
+  =============================== */
+  @media (min-width: 768px) {
+  
+    .dashboard,
+    .gift-card{
+      max-width: 960px;
+      width: calc(100% - 64px);
+      margin-left: auto;
+      margin-right: auto;
+    }
+  
+    .header{
+      height:260px;
+    }
+  
+    h1{
+      font-size:18px;
+    }
+  
+    /* gift jadi 3 kolom */
+    .gift-item{
+      width: calc(33.333% - 14px);
+    }
+  }
+  
+  /* ===============================
+     DESKTOP / LARGE SCREEN
+  =============================== */
+  @media (min-width: 1200px) {
+  
+    .dashboard,
+    .gift-card{
+      max-width: 1100px;
+      width: calc(100% - 80px);
+    }
+  
+    .header{
+      height:300px;
+    }
+  
+    /* gift jadi 4 kolom */
+    .gift-item{
+      width: calc(25% - 14px);
+    }
+  }
+
+</style>
+</head>
+<body>
+
+<div class="header"></div>
+
+<div class="dashboard" id="dashboard">
+  <div class="logo-circle">
+    <img src="logofw.png" alt="Logo FW">
+  </div>
+
+  <div class="friendly-anim">
+    <h1 id="greetingText">Selamat Datang</h1>
+    <div class="date-text" id="dateText">Loading tanggal...</div>
+    <div class="desc">
+      Selamat menikmati layanan gift FAMILI WATER, tukarkan point anda dengan gift menarik
+    </div>
+
+    <div class="card-inner">
+      <div class="profile-row">
+        <div class="profile-left">
+          <img class="avatar" id="avatar" src="default.png" alt="Avatar">
+          <div class="profile-name-block">
+            <div class="nama" id="namaLengkap">Loading...</div>
+            <div class="profile-sub">
+              Point: <span id="point">0</span>
+            </div>
+            <div class="profile-sub">
+              Order Gift: <span id="orderGift">-</span>
+            </div>
+          </div>
+        </div>
+    
+        <!-- TOMBOL ICON + -->
+        <div id="inputDirectWrap" class="input-direct-wrap">
+          <!-- Tombol akan dimunculkan via JS -->
+        </div>
+      </div>
+    
+      <div class="status-row" id="statusRow">
+        <b>Belum ada order</b>
+        <div id="statusText">Tukarkan point anda dengan gift dibawah</div>
+    
+        <!-- TIMER & BATAL ORDER -->
+        <p id="timerText" style="display:none;"></p>
+        <button id="batalOrderBtn" style="display:none;">Batal Order</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDER FOTO STOCK -->
+<div class="stock-slider-card">
+  <div class="stock-slider" id="stockSlider">
+    <!-- gambar diisi via JS -->
+  </div>
+
+  <div class="slider-dots" id="sliderDots">
+    <!-- dot diisi via JS -->
+  </div>
+</div>
+
+<div class="gift-card" id="giftCard">
+  <div class="gift-title">Daftar Gift</div>
+  <div class="gift-container" id="giftContainer"></div>
+</div>
+<!-- POPUP INSTALL PWA -->
+<div class="install-popup-overlay" id="installPopupOverlay">
+  <div class="install-popup">
+    <div class="install-popup-left">
+      <img src="ikon-512.png" alt="Icon" class="install-icon">
+    </div>
+    <div class="install-popup-body">
+      <div class="install-title">Install aplikasi biar praktis</div>
+      <div class="install-sub">(<4 MB)</div>
+    </div>
+    <div class="install-popup-right">
+      <button class="install-btn" id="installBtn">Install</button>
+    </div>
+  </div>
+</div>
+
+<!-- Popup Gift -->
+<div class="popup-overlay" id="popupOverlay">
+  <div class="popup">
+    <div class="popup-header">
+      <h3 id="popupNamaGift">Nama Gift</h3>
+      <span class="close-popup" id="closePopup">&times;</span>
+    </div>
+
+    <div class="popup-img-wrap">
+      <img id="popupImage" src="default.png" alt="Gift Image">
+    </div>
+
+    <div class="popup-body">
+      <div class="popup-info">
+        <span class="label">Point</span>
+        <span class="value" id="popupPointGift">0</span>
+      </div>
+
+      <p id="popupDeskripsi" class="popup-desc">
+        Deskripsi gift...
+      </p>
+
+      <button class="btn btn-primary" id="popupTukarBtn">Tukar Gift</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Popup -->
+<div class="popup-overlay" id="confirmOverlay">
+  <div class="popup">
+    <div class="popup-header">
+      <h3>Konfirmasi Tukar Gift</h3>
+      <span class="close-popup" id="closeConfirm">&times;</span>
+    </div>
+
+    <div class="popup-body">
+      <p id="confirmText" class="popup-desc"></p>
+
+      <div class="confirm-buttons">
+        <button class="btn btn-cancel" id="cancelConfirm">Batal</button>
+        <button class="btn btn-primary" id="confirmTukarBtn">Konfirmasi</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ALERT POPUP -->
+<div class="alert-overlay" id="alertOverlay">
+  <div class="alert-box">
+    <div class="alert-header">
+      <span id="alertTitle">Pesan</span>
+      <span class="close-alert" id="closeAlert">&times;</span>
+    </div>
+    <div class="alert-body" id="alertBody">Ini pesan alert</div>
+    <button class="btn btn-primary" id="alertOkBtn">OK</button>
+  </div>
+</div>
+
+<nav class="navbar">
+  <a href="index.html" class="nav-item" data-page="index.html">
+    <svg width="36" viewBox="0 0 1664 1312" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path d="M1408 768v480q0 26-19 45t-45 19H960V928H704v384H320q-26 0-45-19t-19-45V768q0-1 .5-3t.5-3l575-474l575 474q1 2 1 6zm223-69l-62 74q-8 9-21 11h-3q-13 0-21-7L832 200L140 777q-12 8-24 7q-13-2-21-11l-62-74q-8-10-7-23.5T37 654L756 55q32-26 76-26t76 26l244 204V64q0-14 9-23t23-9h192q14 0 23 9t9 23v408l219 182q10 8 11 21.5t-7 23.5z" fill="currentColor"/></svg>
+    <span>Home</span>
+  </a>
+
+  <a href="game.html" class="nav-item" data-page="game.html">
+    <svg width="36" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path d="M15.9 5.5C15.3 4.5 14.2 4 13 4H7c-1.2 0-2.3.5-2.9 1.5c-2.3 3.5-2.8 8.8-1.2 9.9c1.6 1.1 5.2-3.7 7.1-3.7s5.4 4.8 7.1 3.7c1.6-1.1 1.1-6.4-1.2-9.9zM8 9H7v1H6V9H5V8h1V7h1v1h1v1zm5.4.5c0 .5-.4.9-.9.9s-.9-.4-.9-.9s.4-.9.9-.9s.9.4.9.9zm1.9-2c0 .5-.4.9-.9.9s-.9-.4-.9-.9s.4-.9.9-.9s.9.4.9.9z" fill="currentColor"/></svg>
+    <span>Game</span>
+  </a>
+
+  <a href="https://wa.me/6285759995235?text=Ang%20pengen%20banyu" target="_blank" class="nav-wa">
+    <img src="logofw.png" alt="WA">
+  </a>
+
+  <a href="riwayat.html" class="nav-item" data-page="riwayat.html">
+    <svg width="36" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path class="uim-primary" d="M12 2a10.017 10.017 0 0 0-6.994 2.872V3a1 1 0 0 0-2 0v4.5a1 1 0 0 0 1 1h4.5a1 1 0 0 0 0-2H6.218A7.98 7.98 0 1 1 4 12a1 1 0 0 0-2 0A10 10 0 1 0 12 2z" fill="currentColor"/><path class="uim-primary" d="M14 13h-2a1 1 0 0 1-1-1V9a1 1 0 0 1 2 0v2h1a1 1 0 0 1 0 2z" fill="currentColor"/><path class="uim-tertiary" d="M12 4a8.008 8.008 0 0 0-5.782 2.5h2.288a1 1 0 0 1 0 2h-4.5a.99.99 0 0 1-.978-.889A9.922 9.922 0 0 0 2 12a1 1 0 0 1 2 0a8 8 0 1 0 8-8zm2 9h-2a1 1 0 0 1-1-1V9a1 1 0 0 1 2 0v2h1a1 1 0 0 1 0 2z" opacity=".5" fill="currentColor"/></svg>
+    <span>Riwayat</span>
+  </a>
+
+  <a href="profil.html" class="nav-item nav-profile" data-page="profil.html">
+    <div class="nav-avatar">
+    <svg width="36" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M24 42c9.941 0 18-8.059 18-18S33.941 6 24 6S6 14.059 6 24s8.059 18 18 18zm0 2c11.046 0 20-8.954 20-20S35.046 4 24 4S4 12.954 4 24s8.954 20 20 20z" fill="currentColor"/><path d="M12 35.63c0-1.033.772-1.906 1.8-2.02c7.715-.854 12.72-.777 20.418.019a1.99 1.99 0 0 1 1.108 3.472c-9.085 7.919-14.277 7.81-22.686.008c-.41-.38-.64-.92-.64-1.478z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M34.115 34.623c-7.637-.79-12.57-.864-20.206-.019c-.514.057-.909.496-.909 1.027c0 .286.119.557.32.745c4.168 3.866 7.326 5.613 10.413 5.624c3.098.011 6.426-1.722 10.936-5.652a.99.99 0 0 0-.554-1.724zM13.69 32.616c7.796-.863 12.874-.785 20.632.018a2.99 2.99 0 0 1 1.662 5.221c-4.575 3.988-8.385 6.16-12.257 6.145c-3.883-.014-7.525-2.223-11.766-6.158A3.018 3.018 0 0 1 11 35.63a3.028 3.028 0 0 1 2.69-3.015z" fill="currentColor"/><path d="M32 20a8 8 0 1 1-16 0a8 8 0 0 1 16 0z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M24 26a6 6 0 1 0 0-12a6 6 0 0 0 0 12zm0 2a8 8 0 1 0 0-16a8 8 0 0 0 0 16z" fill="currentColor"/></g></svg>
+
+    </div>
+    <span>Profil</span>
+  </a>
+</nav>
+
+<script>
+  // ===== THEME SYNC DARI PROFIL =====
+  const THEME_KEY = "app-theme";
+  const savedTheme = localStorage.getItem(THEME_KEY);
+
+  if(savedTheme){
+    document.body.classList.add(`theme-${savedTheme}`);
+  } else {
+    document.body.classList.add("theme-light");
+  }
+
+  // ===== Firebase Setup =====
+  const firebaseConfig = {
+    apiKey: "AIzaSyCl13_a4x-BQnWNUjf9JOQX1DKc-HxLBys",
+    authDomain: "klien-39696.firebaseapp.com",
+    projectId: "klien-39696",
+    storageBucket: "klien-39696.firebasestorage.app",
+    messagingSenderId: "434516298894",
+    appId: "1:434516298894:web:fad97694415bd4237acddf"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  const namaLengkapSpan = document.getElementById('namaLengkap');
+  const pointSpan = document.getElementById('point');
+  const avatarImg = document.getElementById('avatar');
+  const giftContainer = document.getElementById('giftContainer');
+  const orderGiftSpan = document.getElementById('orderGift');
+
+  const statusRow = document.getElementById('statusRow');
+  const statusText = document.getElementById('statusText');
+
+  const timerText = document.getElementById('timerText');
+  const batalOrderBtn = document.getElementById('batalOrderBtn');
+
+  const popupOverlay = document.getElementById('popupOverlay');
+  const closePopup = document.getElementById('closePopup');
+  const popupNamaGift = document.getElementById('popupNamaGift');
+  const popupImage = document.getElementById('popupImage');
+  const popupPointGift = document.getElementById('popupPointGift');
+  const popupDeskripsi = document.getElementById('popupDeskripsi');
+  const popupTukarBtn = document.getElementById('popupTukarBtn');
+
+  const confirmOverlay = document.getElementById('confirmOverlay');
+  const closeConfirm = document.getElementById('closeConfirm');
+  const confirmText = document.getElementById('confirmText');
+  const cancelConfirm = document.getElementById('cancelConfirm');
+  const confirmTukarBtn = document.getElementById('confirmTukarBtn');
+
+  const dashboard = document.getElementById('dashboard');
+  const greetingText = document.getElementById('greetingText');
+  const dateText = document.getElementById('dateText');
+  // ===== CUSTOM ALERT =====
+  const alertOverlay = document.getElementById("alertOverlay");
+  const alertTitle = document.getElementById("alertTitle");
+  const alertBody = document.getElementById("alertBody");
+  const closeAlert = document.getElementById("closeAlert");
+  const alertOkBtn = document.getElementById("alertOkBtn");
+  
+  function showAlert(title, message){
+    alertTitle.textContent = title || "Pesan";
+    alertBody.textContent = message || "";
+    alertOverlay.style.display = "flex";
+  }
+  
+  function hideAlert(){
+    alertOverlay.style.display = "none";
+  }
+  
+  closeAlert.addEventListener("click", hideAlert);
+  alertOkBtn.addEventListener("click", hideAlert);
+  alertOverlay.addEventListener("click", (e) => {
+    if(e.target === alertOverlay) hideAlert();
+  });
+
+  // ===== CACHE =====
+  const CACHE_TTL = 24 * 60 * 60 * 1000; // 1 hari
+
+  function setCache(key, data){
+    localStorage.setItem(key, JSON.stringify({
+      updatedAt: Date.now(),
+      data
+    }));
+  }
+
+  function getCache(key){
+    const raw = localStorage.getItem(key);
+    if(!raw) return null;
+
+    const cache = JSON.parse(raw);
+    if(Date.now() - cache.updatedAt > CACHE_TTL) return null;
+
+    return cache.data;
+  }
+
+  // ===== Auth & Load Data =====
+  let currentUserData = null;
+  let currentUid = null;
+  let timerInterval = null;
+  let userRole = "member";
+  let userCollection = "members";
+
+  let selectedGift = null;
+  let selectedGiftId = null;
+
+  auth.onAuthStateChanged(async (user) => {
+    if (!user) {
+      window.location.href = "login.html";
+      return;
+    }
+
+    currentUid = user.uid;
+
+    // ===== Load dari cache dulu (langsung tampil) =====
+    const cachedUser = getCache("user_" + currentUid);
+    const cachedGifts = getCache("gifts");
+    const cachedStock = getCache("stockfoto");
+
+    if(cachedUser){
+      applyUserData(cachedUser);
+      dashboard.style.display = "block";
+    }
+
+    if(cachedGifts){
+      renderGifts(cachedGifts);
+    }
+
+    if(cachedStock){
+      renderStockSlider(cachedStock);
+    }
+
+    // ===== tetap fetch Firestore di background =====
+    await loadUserFromFirestore();
+    await loadGifts();
+    await loadStockSlider();
+  });
+
+  /*==LOAD FOTO PROFIL==*/
+  function loadAvatarFromLocalStorage() {
+    const foto = localStorage.getItem("fotoProfil") || "default.png";
+    return foto;
+  }
+
+  function applyUserData(data){
+    currentUserData = data;
+
+    namaLengkapSpan.textContent = data.namaLengkap;
+    currentUserData.point = Number(data.point || 0);
+    pointSpan.textContent = currentUserData.point;
+    orderGiftSpan.textContent = data.orderGift || "-";
+    
+    // === sinkron foto profil ===
+    const fotoProfilLocal = loadAvatarFromLocalStorage();
+    avatarImg.src = fotoProfilLocal || "default.png";
+    avatarImg.onerror = () => avatarImg.src = "default.png";
+
+    updateStatusUI(currentUserData);
+    setGreetingAndDate();
+    checkOrderTimer(currentUserData);
+  }
+
+  async function loadUserFromFirestore(){
+    try {
+      let doc = await db.collection("agens").doc(currentUid).get();
+
+      if (doc.exists) {
+        userRole = "agen";
+        userCollection = "agens";
+      } else {
+        doc = await db.collection("members").doc(currentUid).get();
+        if (doc.exists) {
+          userRole = "member";
+          userCollection = "members";
+        } else {
+          window.location.href = "login.html";
+          return;
+        }
+      }
+
+      const data = doc.data();
+      currentUserData = data;
+
+      applyUserData(data);
+
+      // simpan cache
+      setCache("user_" + currentUid, data);
+
+      dashboard.style.display = "block";
+    } catch (err) {
+      console.error(err);
+      namaLengkapSpan.textContent = "Gagal load data";
+    }
+  }
+
+  function setGreetingAndDate() {
+    const now = new Date();
+    const hours = now.getHours();
+
+    let greeting = "Selamat";
+    if (hours >= 4 && hours < 10) greeting = "Selamat Pagi";
+    else if (hours >= 10 && hours < 15) greeting = "Selamat Siang";
+    else if (hours >= 15 && hours < 18) greeting = "Selamat Sore";
+    else greeting = "Selamat Malam";
+
+    greetingText.textContent = greeting;
+
+    const hari = ["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"][now.getDay()];
+    const bulan = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"][now.getMonth()];
+    dateText.textContent = `${hari}, ${now.getDate()} ${bulan} ${now.getFullYear()}`;
+  }
+
+  function updateStatusUI(data) {
+    if (!data.orderGift) {
+      statusRow.querySelector("b").textContent = "Belum ada order";
+      statusText.textContent = "Tukarkan point anda dengan gift dibawah";
+    } else {
+      statusRow.querySelector("b").textContent = "Pesanan gift sedang diproses";
+      statusText.textContent = "Tunggu pengiriman ke rumah Anda";
+    }
+  
+    const inputDirectWrap = document.getElementById("inputDirectWrap");
+    inputDirectWrap.innerHTML = "";
+  
+    if (userRole === "agen") {
+      inputDirectWrap.innerHTML = `
+        <button id="btnInputDirect" class="btn-input-direct" title="Input Direct">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+        </button>
+      `;
+  
+      document.getElementById("btnInputDirect").addEventListener("click", () => {
+        window.location.href = "inputagen.html";
+      });
+    }
+  }
+
+  async function loadGifts(){
+    try {
+      const snapshot = await db.collection('gifts').orderBy('__name__').get();
+      const gifts = [];
+
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const giftId = doc.id;
+
+        gifts.push({ id: giftId, data });
+      });
+
+      renderGifts(gifts);
+      setCache("gifts", gifts);
+    } catch(err){
+      console.error("Gagal load gifts:", err);
+    }
+  }
+
+  function renderGifts(gifts){
+    giftContainer.innerHTML = "";
+
+    gifts.forEach(item => {
+      const data = item.data;
+      const giftId = item.id;
+
+      const card = document.createElement('div');
+      card.className = 'gift-item';
+
+      const img = document.createElement('img');
+      img.src = data.imageURL || 'default.png';
+      img.onerror = () => img.src = 'default.png';
+
+      const nameP = document.createElement('p');
+      nameP.textContent = data.namaGift;
+
+      const pointP = document.createElement('p');
+      pointP.textContent = "Point: " + data.pointGift;
+
+      const btn = document.createElement('button');
+      btn.textContent = "Tukar";
+      btn.addEventListener('click', () => openPopup(data, giftId));
+
+      card.appendChild(img);
+      card.appendChild(nameP);
+      card.appendChild(pointP);
+      card.appendChild(btn);
+
+      giftContainer.appendChild(card);
+    });
+  }
+
+  async function loadStockSlider(){
+    try{
+      const docRef = db.collection("stockfoto").doc("aplikasi");
+      const docSnap = await docRef.get();
+
+      if(!docSnap.exists){
+        console.warn("Document stockfoto/aplikasi tidak ditemukan");
+        return;
+      }
+
+      const data = docSnap.data();
+
+      renderStockSlider(data);
+      setCache("stockfoto", data);
+
+    }catch(err){
+      console.error("Gagal load slider stockfoto:", err);
+    }
+  }
+
+  function renderStockSlider(data){
+    const fotos = [
+      data.foto3,
+      data.foto4,
+      data.foto5
+    ];
+
+    const slider = document.getElementById("stockSlider");
+    const dotsWrap = document.getElementById("sliderDots");
+
+    slider.innerHTML = "";
+    dotsWrap.innerHTML = "";
+
+    fotos.forEach((url, index)=>{
+      // ===== SLIDE =====
+      const slide = document.createElement("div");
+      slide.className = "stock-slide";
+
+      const img = document.createElement("img");
+      img.src = url || "default.png";
+      img.onerror = () => img.src = "default.png";
+
+      slide.appendChild(img);
+      slider.appendChild(slide);
+
+      // ===== DOT =====
+      const dot = document.createElement("div");
+      dot.className = "slider-dot" + (index === 0 ? " active" : "");
+      dotsWrap.appendChild(dot);
+    });
+
+    // ===== DOT AKTIF SAAT SCROLL =====
+    slider.addEventListener("scroll", ()=>{
+      const index = Math.round(slider.scrollLeft / slider.clientWidth);
+      dotsWrap.querySelectorAll(".slider-dot").forEach((dot,i)=>{
+        dot.classList.toggle("active", i === index);
+      });
+    });
+  }
+
+  function openPopup(data, giftId){
+    if(currentUserData && currentUserData.orderGift){
+      showAlert("Info", "Selesaikan atau batalkan order sebelumnya dulu.");
+      return;
+    }
+
+    selectedGift = data;
+    selectedGiftId = giftId;
+
+    popupNamaGift.textContent = data.namaGift;
+    popupPointGift.textContent = data.pointGift;
+    popupDeskripsi.textContent = data.deskripsi;
+    popupImage.src = data.imageURL || 'default.png';
+    popupImage.onerror = () => popupImage.src = 'default.png';
+
+    popupOverlay.style.display = 'flex';
+
+    popupTukarBtn.onclick = () => {
+      popupOverlay.style.display = 'none';
+
+      confirmText.textContent =
+        `Kamu yakin ingin menukar ${data.namaGift} dengan ${data.pointGift} point?`;
+
+      confirmOverlay.style.display = 'flex';
+    };
+  }
+
+  closePopup.addEventListener('click', () => {
+    popupOverlay.style.display = 'none';
+  });
+  popupOverlay.addEventListener('click', (e) => {
+    if(e.target === popupOverlay){
+      popupOverlay.style.display = 'none';
+    }
+  });
+
+  cancelConfirm.addEventListener('click', () => {
+    confirmOverlay.style.display = 'none';
+  });
+  closeConfirm.addEventListener('click', () => {
+    confirmOverlay.style.display = 'none';
+  });
+  confirmOverlay.addEventListener('click', (e) => {
+    if(e.target === confirmOverlay){
+      confirmOverlay.style.display = 'none';
+    }
+  });
+
+  confirmTukarBtn.addEventListener('click', async () => {
+    confirmOverlay.style.display = 'none';
+  
+    if(!selectedGift){
+      showAlert("Error", "Gift tidak ditemukan. Silakan pilih ulang.");
+      return;
+    }
+  
+    const memberPoint = Number(currentUserData.point || 0);
+    if(memberPoint < selectedGift.pointGift){
+      showAlert("Gagal", "Point tidak cukup!");
+      return;
+    }
+
+    try {
+      await db.collection(userCollection).doc(currentUid).update({
+        point: memberPoint - selectedGift.pointGift,
+        orderGift: selectedGift.namaGift,
+        orderGiftId: selectedGiftId,
+        orderGiftPoint: selectedGift.pointGift,
+        orderTime: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      showAlert("Sukses", "Tukar gift berhasil!");
+
+      // update UI dan cache
+      await loadUserFromFirestore();
+
+    } catch(err){
+      console.error(err);
+      showAlert("Gagal", "Gagal tukar gift: " + err.message);
+    }
+  });
+  
+  batalOrderBtn.addEventListener('click', async () => {
+    try {
+      const doc = await db.collection(userCollection).doc(currentUid).get();
+      const data = doc.data();
+
+      const now = new Date();
+      const orderTime = data.orderTime.toDate();
+      const diffMs = now - orderTime;
+      const diffMin = diffMs / 60000;
+
+      if(diffMin > 10){
+        showAlert("Info", "Waktu batal sudah lewat 10 menit!");
+        return;
+      }
+
+      await db.collection(userCollection).doc(currentUid).update({
+        point: Number(data.point || 0) + Number(data.orderGiftPoint || 0),
+        orderGift: "",
+        orderGiftId: "",
+        orderGiftPoint: 0,
+        orderTime: null
+      });
+
+      showAlert("Sukses", "Order berhasil dibatalkan!");
+
+      await loadUserFromFirestore();
+
+    } catch(err){
+      console.error(err);
+      showAlert("Gagal", "Gagal batal order: " + err.message);
+    }
+  });
+
+  function checkOrderTimer(memberData){
+    clearInterval(timerInterval);
+  
+    if(!memberData.orderGift || !memberData.orderTime){
+      timerText.style.display = 'none';
+      batalOrderBtn.style.display = 'none';
+      return;
+    }
+  
+    const orderTime = memberData.orderTime.toDate ? memberData.orderTime.toDate() : new Date(memberData.orderTime);
+  
+    timerText.style.display = 'block';
+    batalOrderBtn.style.display = 'block';
+  
+    timerInterval = setInterval(() => {
+      const now = new Date();
+      const diffMs = now - orderTime;
+      const diffMin = Math.floor(diffMs / 60000);
+      const diffSec = Math.floor((diffMs % 60000) / 1000);
+  
+      const remaining = 10 * 60 - (diffMin * 60 + diffSec);
+  
+      if(remaining <= 0){
+        timerText.textContent = "Waktu batal order sudah lewat (10 menit).";
+        batalOrderBtn.disabled = true;
+        clearInterval(timerInterval);
+        return;
+      }
+  
+      const min = Math.floor(remaining / 60);
+      const sec = remaining % 60;
+      timerText.textContent = `Bisa batal dalam: ${min}m ${sec}s`;
+      batalOrderBtn.disabled = false;
+  
+    }, 1000);
+  }
+  // ================================
+  // PWA INSTALL POPUP (index.html)
+  // ================================
+  
+  let deferredPrompt = null;
+  const INSTALL_KEY = "fwpwa_install_last";
+  const APP_OPENED_IN_APP = "fwpwa_opened_in_app";
+  const INSTALLED_KEY = "fwpwa_installed";
+  
+  const installPopupOverlay = document.getElementById("installPopupOverlay");
+  const installBtn = document.getElementById("installBtn");
+  
+  // 1. DETECT if app opened from installed PWA
+  if (window.matchMedia('(display-mode: standalone)').matches) {
+    localStorage.setItem(INSTALLED_KEY, "true");
+  }
+  
+  // 2. DETECT if opened from app (not browser)
+  if (navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
+    localStorage.setItem(APP_OPENED_IN_APP, "true");
+  }
+  
+  // 3. Listen for beforeinstallprompt
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+  });
+  
+  // 4. Show popup if conditions met
+  function showInstallPopup(){
+    const installed = localStorage.getItem(INSTALLED_KEY) === "true";
+    const openedInApp = localStorage.getItem(APP_OPENED_IN_APP) === "true";
+  
+    if(installed || openedInApp) return;
+  
+    const last = localStorage.getItem(INSTALL_KEY);
+    if(last && (Date.now() - Number(last) < 300000)) return; // 1 jam
+  
+    installPopupOverlay.style.display = "block";
+    localStorage.setItem(INSTALL_KEY, Date.now());
+  
+    // 🚀 Auto hide after 3 seconds
+    setTimeout(() => {
+      installPopupOverlay.style.display = "none";
+    }, 5000);
+  }
+  
+  // 5. Install button
+  installBtn.addEventListener("click", async () => {
+    if(!deferredPrompt){
+      showAlert("Info", "Install belum tersedia. Coba buka lagi setelah beberapa saat.");
+      return;
+    }
+  
+    deferredPrompt.prompt();
+    const choice = await deferredPrompt.userChoice;
+  
+    if(choice.outcome === "accepted"){
+      localStorage.setItem(INSTALLED_KEY, "true");
+    }
+  
+    installPopupOverlay.style.display = "none";
+  });
+  
+  // 6. Show popup after page load
+  window.addEventListener("load", () => {
+    setTimeout(showInstallPopup, 800);
+  });
+
+  /* NAVBAR ACTIV */
+  const currentPage = location.pathname.split("/").pop();
+  
+  document.querySelectorAll(".nav-item").forEach(item=>{
+    if(item.dataset.page === currentPage){
+      item.classList.add("active");
+    }
+  });
+  
+  /* NAVBAR SCROLL BEHAVIOR */
+  let lastScrollY = window.scrollY;
+  const navbar = document.querySelector(".navbar");
+  
+  window.addEventListener("scroll", ()=>{
+    const currentScroll = window.scrollY;
+  
+    if(currentScroll > lastScrollY && currentScroll > 80){
+      navbar.classList.add("hide");
+    } else {
+      navbar.classList.remove("hide");
+    }
+  
+    lastScrollY = currentScroll;
+  });
+  
+  /* NAVBAR PROFILE PHOTO SYNC */
+  function loadNavbarAvatar(){
+    const avatarNav = document.querySelector(".nav-avatar");
+    if(!avatarNav) return;
+  
+    const foto = localStorage.getItem("fotoProfil") || "default.png";
+    const finalFoto = (foto && foto !== "") ? foto : "default.png";
+  
+    avatarNav.innerHTML = `
+      <img src="${finalFoto}" alt="Profil" onerror="this.src='default.png'">
+    `;
+  }
+  
+  loadNavbarAvatar();
+  
+  /*EFEK TOUCH*/
+  document.querySelectorAll("button, .nav-item, .nav-wa, .nav-avatar").forEach(el => {
+    el.addEventListener("touchstart", () => {
+      el.classList.add("active-touch");
+    });
+    el.addEventListener("touchend", () => {
+      el.classList.remove("active-touch");
+    });
+  });
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/service-worker.js")
+    .then(() => console.log("PWA SW registered"))
+    .catch(err => console.log("PWA SW failed", err));
+
+  navigator.serviceWorker.register("/firebase-messaging-sw.js")
+    .then(() => console.log("FCM SW registered"))
+    .catch(err => console.log("FCM SW failed", err));
+}
+
+const messaging = firebase.messaging();
+
+messaging.onMessage((payload) => {
+  console.log("Foreground message received:", payload);
+
+  if (Notification.permission === "granted") {
+    const notification = payload.notification || {};
+    const title = notification.title || "Famili Water";
+    const body = notification.body || "Ada pesan baru";
+
+    new Notification(title, {
+      body: body,
+      icon: notification.icon || "/ikon-512.png",
+      badge: "/ikon-512.png",
+      data: payload.data || {}
+    });
+  }
+});
+</script>
+</body>
+</html>

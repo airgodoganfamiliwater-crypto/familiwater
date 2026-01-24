@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#2563eb">
+<link rel="icon" href="/ikon-512.png">
+<title>FAMILI GAME</title>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<style>
+/* ======================================================
+   GLOBAL RESET
+====================================================== */
+*{
+  box-sizing:border-box;
+  font-family:'Nunito',sans-serif;
+  user-select:none;
+  -webkit-user-select:none;
+  outline:none;
+}
+
+body{
+  margin:0;
+  min-height:100vh;
+  background:var(--bg);
+  color:var(--text);
+  transition:background .3s ease,color .3s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* ======================================================
+   ROOT THEME
+====================================================== */
+:root{
+  --primary:#2563eb;
+  --primary-soft:#dbeafe;
+  --bg:#f8fafc;
+  --card:#ffffff;
+  --text:#0f172a;
+  --muted:#64748b;
+  --danger:#ef4444;
+  --border:#e5e7eb;
+  --radius:18px;
+  --blur:10px;
+  --glow:none;
+  --accent:#22d3ee;
+}
+
+/* DARK */
+body.theme-dark{
+  --bg:#0b1220;
+  --card:#0f172a;
+  --text:#e5e7eb;
+  --muted:#94a3b8;
+  --primary:#60a5fa;
+  --primary-soft:#1e293b;
+  --border:#1e293b;
+  --accent:#22d3ee;
+}
+
+/* FUTURE */
+body.theme-future{
+  --bg:radial-gradient(circle at top,#0b0f1a,#020617);
+  --card:rgba(15,23,42,.65);
+  --text:#e0f2fe;
+  --muted:#7dd3fc;
+  --primary:#22d3ee;
+  --primary-soft:rgba(34,211,238,.12);
+  --danger:#fb7185;
+  --border:rgba(34,211,238,.35);
+  --glow:
+    0 0 12px rgba(34,211,238,.35),
+    0 0 26px rgba(34,211,238,.2);
+    --accent:#22d3ee;
+}
+
+/* ======================================================
+   HEADER
+====================================================== */
+.header{
+  height:220px;
+  background:var(--primary);
+  border-radius:0 0 36px 36px;
+}
+
+body.theme-dark .header{
+  background:#020617;
+}
+
+body.theme-future .header{
+  background:
+    radial-gradient(circle at top,rgba(34,211,238,.35),transparent 60%),
+    linear-gradient(135deg,#020617,#020617);
+  box-shadow:var(--glow);
+}
+
+/* ======================================================
+   LAYOUT
+====================================================== */
+.container{
+  padding:0 16px 32px;
+  margin-top:-150px;
+}
+
+/* ======================================================
+   CARD
+====================================================== */
+.card{
+  background:var(--card);
+  border-radius:var(--radius);
+  padding:18px;
+  margin-bottom:18px;
+  border:1px solid var(--border);
+  box-shadow:0 12px 32px rgba(0,0,0,.08);
+  transition:
+    transform .25s ease,
+    box-shadow .25s ease,
+    background .25s ease;
+  text-align:center;
+}
+
+body.theme-dark .card,
+body.theme-future .card{
+  backdrop-filter: blur(8px);
+}
+  /* SPLASH */
+  #splash{
+    position:fixed;inset:0;
+    display:flex;flex-direction:column;justify-content:center;align-items:center;
+    background:var(--bg);z-index:9999;
+  }
+  #splashLogo{
+    width:100px;height:100px;object-fit:cover;border-radius:12px;
+    margin-bottom:20px;
+    transform:translateY(0);
+  }
+  #splashText {
+    font-family: 'Audiowide', cursive; /* hanya untuk splash */
+    color: var(--accent);
+    font-size: 20px;
+    font-weight: 700;
+    text-align: center;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.8s ease-out;
+  }
+
+/* ======================================================
+   LOGO & TITLE
+====================================================== */
+.logo-wrapper{
+  display:flex;
+  justify-content:center;
+}
+
+.logo-fw{
+  width:90px;
+  height:90px;
+  margin-top:-70px;
+  border-radius:50%;
+  object-fit:cover;
+  animation:spinOnce 1s ease forwards;
+}
+
+@keyframes spinOnce{
+  from{transform:rotate(0) scale(.8);opacity:0}
+  to{transform:rotate(360deg) scale(1);opacity:1}
+}
+
+body.theme-future .logo-fw{
+  filter:
+    drop-shadow(0 0 12px rgba(34,211,238,.6))
+    drop-shadow(0 0 28px rgba(34,211,238,.35));
+}
+
+h1{
+  margin:12px 0 0;
+  color:var(--primary);
+}
+
+/* ======================================================
+   GAME GRID
+====================================================== */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:14px;
+}
+
+.game-card{
+  cursor:pointer;
+  padding:12px;
+  border-radius:18px;
+  border:1px solid var(--border);
+  background:var(--card);
+  box-shadow:0 12px 30px rgba(0,0,0,.08);
+  transition:transform .25s ease, box-shadow .25s ease;
+  overflow:hidden;
+}
+
+.game-card:hover{
+  transform:translateY(-3px);
+  box-shadow:0 18px 40px rgba(0,0,0,.18);
+}
+
+.game-card img{
+  width:100%;
+  height:120px;
+  object-fit:cover;
+  border-radius:14px;
+}
+
+.game-card h3{
+  margin:10px 0 0;
+  font-size:16px;
+}
+
+/* ======================================================
+   POPUP
+====================================================== */
+.popup-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.35);
+  backdrop-filter:blur(6px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  opacity:0;
+  pointer-events:none;
+  transition:.35s ease;
+  z-index:9999;
+}
+
+.popup-overlay.show{
+  opacity:1;
+  pointer-events:auto;
+}
+
+.popup-card{
+  width:min(92%,420px);
+  background:var(--card);
+  border-radius:24px;
+  padding:20px;
+  border:1px solid var(--border);
+  box-shadow:0 20px 60px rgba(0,0,0,.35);
+  transform:translateY(30px) scale(.96);
+  opacity:0;
+  transition:.4s cubic-bezier(.4,0,.2,1);
+}
+
+.popup-overlay.show .popup-card{
+  transform:translateY(0) scale(1);
+  opacity:1;
+}
+
+.popup-card img{
+  width:100%;
+  height:180px;
+  object-fit:cover;
+  border-radius:14px;
+}
+
+.popup-card h3{
+  margin:14px 0 0;
+}
+
+.popup-card .btn{
+  width:100%;
+  padding:12px;
+  border-radius:14px;
+  border:none;
+  cursor:pointer;
+  font-weight:700;
+  margin-top:12px;
+}
+
+.btn.cancel{
+  background:var(--border);
+  color:var(--text);
+}
+
+.btn.play{
+  background:var(--primary);
+  color:#fff;
+}
+
+/* ======================================================
+   BOTTOM NAVBAR
+====================================================== */
+  .navbar{
+    position:fixed;
+    bottom:14px;
+    left:14px;
+    right:14px;
+    height:70px;
+    background:var(--card);
+    border-radius:24px;
+    border:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 12px;
+    box-shadow:
+      0 14px 40px rgba(0,0,0,.25),
+      var(--glow);
+    backdrop-filter:blur(var(--blur));
+    z-index:999;
+  }
+
+  /* ITEM */
+  .nav-item{
+    flex:1;
+    text-align:center;
+    text-decoration:none;
+    color:var(--muted);
+    font-size:11px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+    transition:.25s ease;
+  }
+
+  .nav-item svg{
+    width:22px;
+    height:22px;
+    fill:currentColor;
+  }
+
+  /* ACTIVE */
+  .nav-item.active{
+    color:var(--primary);
+  }
+
+  .nav-item.active svg{
+    filter:drop-shadow(0 0 6px rgba(0,0,0,.2));
+  }
+
+  /* WHATSAPP SPECIAL BUTTON */
+  .nav-wa{
+    width:64px;
+    height:64px;
+    margin-top:-34px;
+    background:linear-gradient(135deg,#22c55e,#16a34a);
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:
+      0 14px 40px rgba(34,197,94,.6),
+      var(--glow);
+    border:4px solid var(--card);
+  }
+
+  .nav-wa img{
+    width:34px;
+    height:34px;
+    border-radius:50%;
+  }
+
+  /* ===============================
+     NAVBAR PROFILE AVATAR
+  ================================ */
+  .nav-avatar{
+    width:26px;
+    height:26px;
+    border-radius:50%;
+    background:#e5e7eb;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    border:2px solid var(--card);
+  }
+
+  .nav-avatar img{
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+    object-fit: cover;
+    border: 2px solid var(--primary);
+  }
+
+  .nav-avatar-icon{
+    width:18px;
+    height:18px;
+    fill:currentColor;
+  }
+
+  /* ACTIVE STATE */
+  .nav-item.active .nav-avatar{
+    box-shadow:
+      0 0 0 2px var(--primary),
+      var(--glow);
+  }
+
+  /* ===============================
+     NAVBAR AUTO HIDE ON SCROLL
+  ================================ */
+  .navbar{
+    transition:
+      transform .35s cubic-bezier(.4,0,.2,1),
+      opacity .25s ease;
+  }
+
+  /* HIDDEN STATE */
+  .navbar.hide{
+    transform: translateY(120%);
+    opacity: 0;
+  }
+    /* ===== GLOBAL CLICK EFFECT (Timbul saat klik) ===== */
+  .btn,
+  .nav-item,
+  .nav-wa,
+  .nav-avatar,
+  button {
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+
+  .btn:active,
+  button:active,
+  .nav-item:active,
+  .nav-wa:active,
+  .nav-avatar:active {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0,0,0,.25), var(--glow);
+  }
+</style>
+</head>
+<body>
+<!-- SPLASH -->
+<div id="splash">
+  <img id="splashLogo" src="logofw.png" alt="Logo">
+  <div id="splashText"></div>
+</div>
+<div class="header"></div>
+
+<div class="container">
+  <div class="card">
+    <div class="logo-wrapper">
+      <img src="logofw.png" alt="Logo FW" class="logo-fw">
+    </div>
+      <h1 style="margin:12px 0 0;">FAMILI GAME</h1>
+  </div>
+    <div class="card">
+      <div class="grid" id="gameGrid"></div>
+    </div>
+</div>
+
+<!-- POPUP -->
+<div class="popup-overlay" id="overlay">
+  <div class="popup-card">
+    <img id="popupImg" src="" alt="Game Image">
+    <h3 id="popupTitle"></h3>
+    <button class="btn cancel" id="btnCancel">Batal</button>
+    <button class="btn play" id="btnPlay">Mainkan</button>
+  </div>
+</div>
+  <nav class="navbar">
+    <a href="index.html" class="nav-item" data-page="index.html">
+      <svg width="36" viewBox="0 0 1664 1312" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path d="M1408 768v480q0 26-19 45t-45 19H960V928H704v384H320q-26 0-45-19t-19-45V768q0-1 .5-3t.5-3l575-474l575 474q1 2 1 6zm223-69l-62 74q-8 9-21 11h-3q-13 0-21-7L832 200L140 777q-12 8-24 7q-13-2-21-11l-62-74q-8-10-7-23.5T37 654L756 55q32-26 76-26t76 26l244 204V64q0-14 9-23t23-9h192q14 0 23 9t9 23v408l219 182q10 8 11 21.5t-7 23.5z" fill="currentColor"/></svg>
+      <span>Home</span>
+    </a>
+  
+    <a href="game.html" class="nav-item" data-page="game.html">
+      <svg width="36" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path d="M15.9 5.5C15.3 4.5 14.2 4 13 4H7c-1.2 0-2.3.5-2.9 1.5c-2.3 3.5-2.8 8.8-1.2 9.9c1.6 1.1 5.2-3.7 7.1-3.7s5.4 4.8 7.1 3.7c1.6-1.1 1.1-6.4-1.2-9.9zM8 9H7v1H6V9H5V8h1V7h1v1h1v1zm5.4.5c0 .5-.4.9-.9.9s-.9-.4-.9-.9s.4-.9.9-.9s.9.4.9.9zm1.9-2c0 .5-.4.9-.9.9s-.9-.4-.9-.9s.4-.9.9-.9s.9.4.9.9z" fill="currentColor"/></svg>
+      <span>Game</span>
+    </a>
+  
+    <a href="https://wa.me/6285759995235?text=Ang%20pengen%20banyu" target="_blank" class="nav-wa">
+      <img src="logofw.png" alt="WA">
+    </a>
+  
+    <a href="riwayat.html" class="nav-item" data-page="riwayat.html">
+      <svg width="36" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path class="uim-primary" d="M12 2a10.017 10.017 0 0 0-6.994 2.872V3a1 1 0 0 0-2 0v4.5a1 1 0 0 0 1 1h4.5a1 1 0 0 0 0-2H6.218A7.98 7.98 0 1 1 4 12a1 1 0 0 0-2 0A10 10 0 1 0 12 2z" fill="currentColor"/><path class="uim-primary" d="M14 13h-2a1 1 0 0 1-1-1V9a1 1 0 0 1 2 0v2h1a1 1 0 0 1 0 2z" fill="currentColor"/><path class="uim-tertiary" d="M12 4a8.008 8.008 0 0 0-5.782 2.5h2.288a1 1 0 0 1 0 2h-4.5a.99.99 0 0 1-.978-.889A9.922 9.922 0 0 0 2 12a1 1 0 0 1 2 0a8 8 0 1 0 8-8zm2 9h-2a1 1 0 0 1-1-1V9a1 1 0 0 1 2 0v2h1a1 1 0 0 1 0 2z" opacity=".5" fill="currentColor"/></svg>
+      <span>Riwayat</span>
+    </a>
+  
+    <a href="profil.html" class="nav-item nav-profile" data-page="profil.html">
+      <div class="nav-avatar">
+      <svg width="36" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M24 42c9.941 0 18-8.059 18-18S33.941 6 24 6S6 14.059 6 24s8.059 18 18 18zm0 2c11.046 0 20-8.954 20-20S35.046 4 24 4S4 12.954 4 24s8.954 20 20 20z" fill="currentColor"/><path d="M12 35.63c0-1.033.772-1.906 1.8-2.02c7.715-.854 12.72-.777 20.418.019a1.99 1.99 0 0 1 1.108 3.472c-9.085 7.919-14.277 7.81-22.686.008c-.41-.38-.64-.92-.64-1.478z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M34.115 34.623c-7.637-.79-12.57-.864-20.206-.019c-.514.057-.909.496-.909 1.027c0 .286.119.557.32.745c4.168 3.866 7.326 5.613 10.413 5.624c3.098.011 6.426-1.722 10.936-5.652a.99.99 0 0 0-.554-1.724zM13.69 32.616c7.796-.863 12.874-.785 20.632.018a2.99 2.99 0 0 1 1.662 5.221c-4.575 3.988-8.385 6.16-12.257 6.145c-3.883-.014-7.525-2.223-11.766-6.158A3.018 3.018 0 0 1 11 35.63a3.028 3.028 0 0 1 2.69-3.015z" fill="currentColor"/><path d="M32 20a8 8 0 1 1-16 0a8 8 0 0 1 16 0z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M24 26a6 6 0 1 0 0-12a6 6 0 0 0 0 12zm0 2a8 8 0 1 0 0-16a8 8 0 0 0 0 16z" fill="currentColor"/></g></svg>
+  
+      </div>
+      <span>Profil</span>
+    </a>
+  </nav>
+<script>
+  // ===== THEME SYNC =====
+  const THEME_KEY = "app-theme";
+  const savedTheme = localStorage.getItem(THEME_KEY);
+  if(savedTheme){
+    document.body.classList.add(`theme-${savedTheme}`);
+  } else {
+    document.body.classList.add("theme-light");
+  }
+  
+  // ===== FIREBASE =====
+  firebase.initializeApp({
+    apiKey: "AIzaSyCl13_a4x-BQnWNUjf9JOQX1DKc-HxLBys",
+    authDomain: "klien-39696.firebaseapp.com",
+    projectId: "klien-39696"
+  });
+  const auth = firebase.auth();
+  
+  const splash = document.getElementById('splash');
+  const splashLogo = document.getElementById('splashLogo');
+  const splashText = document.getElementById('splashText');
+  
+  function showSplash(user){
+    const SPLASH_INTERVAL = 30 * 60 * 1000;
+    const lastSplash = localStorage.getItem('lastSplashTime');
+    const now = Date.now();
+  
+    const showSplash = !lastSplash || (now - lastSplash > SPLASH_INTERVAL);
+  
+    if(!showSplash){
+      splash.style.display = 'none';
+      return;
+    }
+  
+    localStorage.setItem('lastSplashTime', now);
+  
+    splashText.innerHTML = `Selamat datang ${user.displayName || "Player"}<br>Di FAMILI GAME`;
+  
+    let y = 0, v = -15, gravity = 0.7, damping = 0.6;
+    let bounces = 0, maxBounces = 3;
+  
+    function bounce(){
+      y += v;
+      v += gravity;
+  
+      if(y > 0){
+        y = 0;
+        v *= -damping;
+        bounces++;
+      }
+  
+      splashLogo.style.transform = `translateY(${-y}px)`;
+  
+      if(bounces < maxBounces || Math.abs(v) > 0.5){
+        requestAnimationFrame(bounce);
+      } else {
+        splashText.style.opacity = 1;
+        splashText.style.transform = 'scale(1)';
+  
+        setTimeout(()=>{
+          splash.style.display = 'none';
+        }, 1500);
+      }
+    }
+  
+    bounce();
+  }
+  
+  auth.onAuthStateChanged(user => {
+    if(!user){
+      window.location.href = "login.html";
+      return;
+    }
+  
+    showSplash(user);
+  });
+
+  // ===== GAME DATA =====
+  const games = [
+    {title:"Famili Game", img:"logofw.png", link:"game-1.html"},
+    {title:"Fly Bird", img:"https://cdn8.gametop.com/download-free-games/flappy-bird-new/b2.jpg", link:"game-2.html"},
+    {title:"Mazeblox", img:"https://share.google/kBqSIAqLNS4DGHchZ", link:"game-3.html"},
+    {title:"Mario FPS", img:"https://www5.minijuegosgratis.com/v3/games/thumbnails/232025_7_sq.jpg", link:"game-4.html"},
+    {title:"Angry Bird", img:"https://mediaproxy.tvtropes.org/width/1200/https://static.tvtropes.org/pmwiki/pub/images/angrybirdsbig.png", link:"game-5.html"},
+    {title:"Sasquash", img:"https://cdn.phaser.io/news/2015/06/sasquash1.png", link:"game-6.html"},
+    {title:"Springy Ninja", img:"https://www.metacritic.com/a/img/catalog/provider/6/12/6-1-532487-52.jpg", link:"game-7.html"},
+    {title:"Timbercraft", img:"https://www.gameszap.com/files/img/timbercraft-1511552507.jpg", link:"game-8.html"},
+    {title:"Pacman Dash", img:"https://s3.us-east-2.amazonaws.com/gmag.io-live-us/games/logos/14287_6464862a86509.png", link:"game-9.html"},
+    {title:"Easter Coloring", img:"https://share.google/wIrLWM3W6npbpwHOK", link:"game-10.html"},
+    {title:"Popstar", img:"https://img.utdstc.com/icon/49c/84f/49c84f80927fd7491beace9a1d00bbc13809f117e14baa9ec3f29d4e90659855:200", link:"game-11.html"},
+    {title:"Out Run", img:"https://segaretro.org/images/b/b1/Out_Run_Title.png", link:"game-12.html"},
+    {title:"Pac-Man", img:"https://muralsyourway.vtexassets.com/arquivos/ids/274926-825-auto?width=825&height=auto&aspect=true", link:"game-13.html"},
+    {title:"Mizecraft", img:"https://cdn.pomu.com/files/game/img_mobile/15630/Mazecraft.webp", link:"game-14.html"}
+  ];
+  // render
+  const grid = document.getElementById("gameGrid");
+  games.forEach(g => {
+    const card = document.createElement("div");
+    card.className = "game-card";
+    card.innerHTML = `
+      <img src="${g.img}">
+      <h3>${g.title}</h3>
+    `;
+    card.addEventListener("click", () => openPopup(g));
+    grid.appendChild(card);
+  });
+
+  // popup
+  const overlay = document.getElementById("overlay");
+  const popupImg = document.getElementById("popupImg");
+  const popupTitle = document.getElementById("popupTitle");
+  const btnCancel = document.getElementById("btnCancel");
+  const btnPlay = document.getElementById("btnPlay");
+
+  let selectedGame = null;
+
+  function openPopup(game){
+    selectedGame = game;
+    popupImg.src = game.img;
+    popupTitle.textContent = game.title;
+    overlay.classList.add("show");
+  }
+
+  btnCancel.addEventListener("click", () => overlay.classList.remove("show"));
+  overlay.addEventListener("click", (e) => {
+    if(e.target === overlay) overlay.classList.remove("show");
+  });
+
+  btnPlay.addEventListener("click", () => {
+    if(selectedGame && selectedGame.link){
+      window.location.href = selectedGame.link;
+    } else {
+      alert("Link game belum tersedia");
+    }
+  });
+    /* NAVBAR ACTIV */
+  const currentPage = location.pathname.split("/").pop();
+  
+  document.querySelectorAll(".nav-item").forEach(item=>{
+    if(item.dataset.page === currentPage){
+      item.classList.add("active");
+    }
+  });
+  /* ===============================
+     NAVBAR SCROLL BEHAVIOR
+  ================================ */
+  let lastScrollY = window.scrollY;
+  const navbar = document.querySelector(".navbar");
+  
+  window.addEventListener("scroll", ()=>{
+    const currentScroll = window.scrollY;
+  
+    // scroll ke bawah → sembunyikan
+    if(currentScroll > lastScrollY && currentScroll > 80){
+      navbar.classList.add("hide");
+    }
+    // scroll ke atas → tampilkan
+    else{
+      navbar.classList.remove("hide");
+    }
+  
+    lastScrollY = currentScroll;
+  });
+  /* ===============================
+     NAVBAR PROFILE PHOTO SYNC
+  ================================ */
+  function loadNavbarAvatar(){
+    const avatarNav = document.querySelector(".nav-avatar");
+    if(!avatarNav) return;
+  
+    const foto = localStorage.getItem("fotoProfil");
+  
+    if(foto){
+      avatarNav.innerHTML = `<img src="${foto}" alt="Profil">`;
+    }
+  }
+  
+  loadNavbarAvatar();
+</script>
+
+</body>
+</html>

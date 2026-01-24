@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#2563eb">
+<link rel="icon" href="/ikon-512.png">
+<title>Riwayat</title>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<style>
+/* ===============================
+     GLOBAL RESET
+  =============================== */
+  *{
+    box-sizing:border-box;
+    font-family:'Nunito',sans-serif;
+    user-select:none;
+    -webkit-user-select:none;
+    outline:none;
+  }
+  
+  body{
+    margin:0;
+    min-height:100vh;
+    background:var(--bg);
+    color:var(--text);
+    transition:background .3s ease,color .3s ease;
+    -webkit-tap-highlight-color:transparent;
+  }
+  
+  /* ===============================
+     ROOT THEME (SUDAH FIX)
+  =============================== */
+  :root{
+    --primary:#2563eb;
+    --primary-soft:#dbeafe;
+    --bg:#f8fafc;
+    --card:#ffffff;
+    --text:#0f172a;
+    --muted:#64748b;
+    --danger:#ef4444;
+    --border:#e5e7eb;
+    --radius:18px;
+    --blur:10px;
+    --glow:none;
+  }
+  
+  body.theme-dark{
+    --bg:#0b1220;
+    --card:#0f172a;
+    --text:#e5e7eb;
+    --muted:#94a3b8;
+    --primary:#60a5fa;
+    --primary-soft:#1e293b;
+    --border:#1e293b;
+  }
+  
+  body.theme-future{
+    --bg:radial-gradient(circle at top,#0b0f1a,#020617);
+    --card:rgba(15,23,42,.65);
+    --text:#e0f2fe;
+    --muted:#7dd3fc;
+    --primary:#22d3ee;
+    --primary-soft:rgba(34,211,238,.12);
+    --danger:#fb7185;
+    --border:rgba(34,211,238,.35);
+    --glow:
+      0 0 12px rgba(34,211,238,.35),
+      0 0 26px rgba(34,211,238,.2);
+  }
+  
+  /* ================= HEADER ================= */
+  .header{
+    height:220px;
+    background:var(--primary);
+    border-radius:0 0 32px 32px;
+    border-bottom-left-radius:36px;
+    border-bottom-right-radius:36px;
+  }
+  body.theme-dark .header{
+    background:#020617;
+  }
+  
+  body.theme-future .header{
+    background:
+      radial-gradient(circle at top,rgba(34,211,238,.35),transparent 60%),
+      linear-gradient(135deg,#020617,#020617);
+      box-shadow:var(--glow);
+  }
+  
+  /* ================= CARD ================= */
+  .card{
+    background:var(--card);
+    border-radius:var(--radius);
+    padding:18px;
+    margin-bottom:18px;
+    box-shadow: 0 12px 32px rgba(0,0,0,.08);
+    border:1px solid var(--border);
+    transition:
+      transform .25s ease,
+      box-shadow .25s ease,
+      background .25s ease;
+  }
+  
+  /* Blur hanya di dark & future */
+  body.theme-dark .card,
+  body.theme-future .card{
+    backdrop-filter: blur(8px);
+  }
+  
+  .small{font-size:12px;color:var(--muted)}
+  .bold{font-weight:700}
+  
+  /* ================= LAYOUT ================= */
+  .container{
+    padding:0 16px 32px;
+    margin-top:-150px;
+  }
+  
+  /* ================= HISTORIS ================= */
+  .riwayat-item{
+    padding:12px 0;
+    border-bottom:1px dashed var(--border);
+  }
+  .riwayat-item:last-child{border-bottom:none}
+  
+  .total-inline{
+    margin-top:16px;
+    padding-top:14px;
+    border-top:1px solid var(--border);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .total-inline b{
+    font-size:18px;
+    color:var(--primary);
+  }
+  
+  /* ======================================================
+     ⚠️ TRACKING KESEHATAN
+     ❗ TIDAK DIUBAH SESUAI PERMINTAAN
+  ====================================================== */
+  .health-card{
+    background:linear-gradient(
+      180deg,
+      rgba(34,197,94,.10),
+      rgba(34,197,94,.02)
+    );
+    border:1px solid rgba(34,197,94,.25);
+    animation:none;
+    padding-top: 30px;
+    padding-bottom: 130px;
+  }
+  body.theme-future .health-card{
+    animation:softPulse 4s ease-in-out infinite;
+  }
+  
+  @keyframes softPulse{
+    0%,100%{opacity:1}
+    50%{opacity:.96}
+  }
+  
+  @keyframes breathe{
+    0%{box-shadow:0 0 0 rgba(34,197,94,0)}
+    50%{box-shadow:0 0 26px rgba(34,197,94,.35)}
+    100%{box-shadow:0 0 0 rgba(34,197,94,0)}
+  }
+  
+  @keyframes heartbeat{
+    0%{transform:scale(1)}
+    25%{transform:scale(1.06)}
+    40%{transform:scale(1)}
+    60%{transform:scale(1.08)}
+    100%{transform:scale(1)}
+  }
+  
+  @keyframes flow{
+    from{background-position:0% 50%}
+    to{background-position:200% 50%}
+  }
+  
+  .health-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:14px;
+  }
+  
+  .health-badge{
+    padding:5px 12px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:700;
+    background:rgba(34,197,94,.18);
+    color:#166534;
+    animation:none;
+  }
+  body.theme-future .health-badge{
+    animation:heartbeat 2.4s ease-in-out infinite;
+  }
+  
+  .trackRow{
+    display:flex;
+    gap:16px;
+    align-items:center;
+  }
+  
+  .bodySvg{
+    width:160px;
+    height:auto;
+    overflow:visible;
+    }
+    .svgText{
+    font-family: 'Nunito', sans-serif;
+    font-size: 25px;
+    font-weight: 800;
+    gap: 2px;
+    letter-spacing: 3px;
+    fill: #16a; /* hijau */
+    opacity: .9;
+    pointer-events: none;
+  }
+  .svgTextBold{
+    font-size:28px;
+    font-weight:1000;
+    letter-spacing:3px;
+  }
+    body.theme-future .svgText{
+    fill: #22c;
+    filter:
+      drop-shadow(0 0 6px rgba(34,197,94,.9))
+      drop-shadow(0 0 20px rgba(34,197,94,.6))
+      drop-shadow(0 0 40px rgba(34,197,94,.35));
+  }
+    body.theme-dark .svgText{
+    fill: #86efac;
+    opacity: .85;
+  }
+  
+  /* ===============================
+     MODE GELAP & FUTURISTIK SAJA
+     =============================== */
+  
+  body.theme-dark .bodyPath,
+body.theme-future .bodyPath{
+  stroke: #ffffff;
+  stroke-width: 2.4;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+
+  filter:
+    drop-shadow(0 0 10px rgba(34,197,94,.7))
+    drop-shadow(0 0 28px rgba(34,197,94,.45));
+}
+  
+  /* ===============================
+     MODE CERAH (NO EFFECT)
+     =============================== */
+  
+  body:not(.theme-dark):not(.theme-future) .bodyPath{
+    stroke: none;
+    filter: none;
+  }
+  
+  .progressBarMini{
+    width:100%;
+    height:8px;
+    background:#e5e7eb;
+    border-radius:999px;
+    overflow:hidden;
+  }
+  .progressFillMini{
+    height:100%;
+    width:0%;
+    border-radius:999px;
+    background-size:200% 200%;
+    animation:none;
+  }
+  body.theme-future .progressFillMini{
+    animation:flow 4s linear infinite;
+  }
+  
+  .status{
+    margin-top:8px;
+    font-weight:700;
+  }
+  
+  /* ================= STATUS ================= */
+  .loading{text-align:center;color:var(--muted)}
+  .error{
+    background:color-mix(in srgb, var(--danger) 20%, transparent);
+    color:var(--danger);
+    padding:12px;
+    border-radius:14px;
+  }
+  
+  /* ================= POLA KONSUMSI ================= */
+  .pattern-box{
+    margin-top:40px;
+    padding:14px;
+    border-radius:16px;
+    background:
+      linear-gradient(
+        135deg,
+        var(--primary-soft),
+        color-mix(in srgb, var(--card) 70%, transparent)
+      );
+    border:1px solid var(--border);
+  }
+  
+  .pattern-row{
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:6px;
+    font-size:13px;
+  }
+  .pattern-row b{color:var(--primary)}
+    /* CARD POLA KONSUMSI INTERAKTIF */
+  .pattern-box{
+    cursor:pointer;
+    transition:
+      transform .18s cubic-bezier(.4,0,.2,1),
+      box-shadow .18s ease,
+      filter .18s ease;
+  }
+  
+  /* HOVER (DESKTOP) */
+  @media (hover:hover){
+    .pattern-box:hover{
+      transform: translateY(-3px);
+      box-shadow:
+        0 14px 32px rgba(0,0,0,.18),
+        var(--glow);
+    }
+  }
+  
+  /* TAP / KLIK */
+  .pattern-box:active{
+    transform: translateY(-2px) scale(1.01);
+    filter: brightness(1.04);
+  }
+  
+  /* ================= MINI EVENT GRAPH ================= */
+  .event-graph{
+    display:flex;
+    gap:6px;
+    margin-top:10px;
+    align-items:flex-end;
+    height:48px;
+  }
+  
+  .event-bar{
+    flex:1;
+    background:color-mix(in srgb, var(--primary) 40%, transparent);
+    border-radius:6px 6px 2px 2px;
+    height:0;
+    transition:height .7s cubic-bezier(.4,0,.2,1);
+  }
+  .health-footer{
+    position:absolute;
+    bottom:28px;
+    left:0;
+    right:0;
+    text-align:center;
+    font-size:11px;
+    letter-spacing:.08em;
+    color:rgba(22,101,52,.6);
+  }
+  
+  /* MODE GELAP */
+  body.theme-dark .health-footer{
+    color:rgba(34,197,94,.75);
+  }
+  
+  /* MODE FUTURISTIK */
+  body.theme-future .health-footer{
+    color:rgba(34,197,94,.85);
+    text-shadow:
+      0 0 6px rgba(34,197,94,.6),
+      0 0 18px rgba(34,197,94,.4);
+  }
+    /* ===============================
+     POPUP GLASS FUTURISTIC
+  =============================== */
+  .popup-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.35);
+    backdrop-filter:blur(6px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    opacity:0;
+    pointer-events:none;
+    transition:.35s ease;
+    z-index:9999;
+  }
+  
+  .popup-overlay.show{
+    opacity:1;
+    pointer-events:auto;
+  }
+  
+  .popup-card{
+    width:min(92%,420px);
+    background:var(--card);
+    border-radius:24px;
+    padding:20px;
+    border:1px solid var(--border);
+    box-shadow:
+      0 20px 60px rgba(0,0,0,.35),
+      var(--glow);
+    transform:translateY(30px) scale(.96);
+    opacity:0;
+    transition:.4s cubic-bezier(.4,0,.2,1);
+  }
+  
+  .popup-overlay.show .popup-card{
+    transform:translateY(0) scale(1);
+    opacity:1;
+  }
+  
+  .popup-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+  }
+  
+  .popup-badge{
+    padding:6px 14px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:800;
+  }
+  
+  .popup-close{
+    background:none;
+    border:none;
+    font-size:18px;
+    color:var(--muted);
+  }
+  
+  .popup-card h3{
+    margin:6px 0 10px;
+  }
+  
+  .popup-card p{
+    font-size:14px;
+    line-height:1.6;
+    color:var(--text);
+  }
+  
+  .popup-btn{
+    margin-top:16px;
+    width:100%;
+    padding:12px;
+    border-radius:14px;
+    border:none;
+    background:var(--primary);
+    color:white;
+    font-weight:700;
+  }
+  /* ===============================
+     BOTTOM NAVBAR
+  ============================== */
+  .navbar{
+    position:fixed;
+    bottom:14px;
+    left:14px;
+    right:14px;
+    height:70px;
+    background:var(--card);
+    border-radius:24px;
+    border:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 12px;
+    box-shadow:
+      0 14px 40px rgba(0,0,0,.25),
+      var(--glow);
+    backdrop-filter:blur(var(--blur));
+    z-index:999;
+  }
+
+  /* ITEM */
+  .nav-item{
+    flex:1;
+    text-align:center;
+    text-decoration:none;
+    color:var(--muted);
+    font-size:11px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+    transition:.25s ease;
+  }
+
+  .nav-item svg{
+    width:22px;
+    height:22px;
+    fill:currentColor;
+  }
+
+  /* ACTIVE */
+  .nav-item.active{
+    color:var(--primary);
+  }
+
+  .nav-item.active svg{
+    filter:drop-shadow(0 0 6px rgba(0,0,0,.2));
+  }
+
+  /* WHATSAPP SPECIAL BUTTON */
+  .nav-wa{
+    width:64px;
+    height:64px;
+    margin-top:-34px;
+    background:linear-gradient(135deg,#22c55e,#16a34a);
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:
+      0 14px 40px rgba(34,197,94,.6),
+      var(--glow);
+    border:4px solid var(--card);
+  }
+
+  .nav-wa img{
+    width:34px;
+    height:34px;
+    border-radius:50%;
+  }
+
+  /* ===============================
+     NAVBAR PROFILE AVATAR
+  ================================ */
+  .nav-avatar{
+    width:26px;
+    height:26px;
+    border-radius:50%;
+    background:#e5e7eb;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    border:2px solid var(--card);
+  }
+
+  .nav-avatar img{
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+    object-fit: cover;
+    border: 2px solid var(--primary);
+  }
+
+  .nav-avatar-icon{
+    width:18px;
+    height:18px;
+    fill:currentColor;
+  }
+
+  /* ACTIVE STATE */
+  .nav-item.active .nav-avatar{
+    box-shadow:
+      0 0 0 2px var(--primary),
+      var(--glow);
+  }
+
+  /* ===============================
+     NAVBAR AUTO HIDE ON SCROLL
+  ================================ */
+  .navbar{
+    transition:
+      transform .35s cubic-bezier(.4,0,.2,1),
+      opacity .25s ease;
+  }
+
+  /* HIDDEN STATE */
+  .navbar.hide{
+    transform: translateY(120%);
+    opacity: 0;
+  }
+
+  /* FUTURISTIC BOOST */
+  body.theme-future .nav-wa{
+    box-shadow:
+      0 0 18px rgba(34,197,94,.8),
+      0 0 40px rgba(34,197,94,.6);
+  }
+    /* ===============================
+     GLOBAL BUTTON PRESS EFFECT
+     (CLICK / TAP TIMBUL LALU BALIK)
+  =============================== */
+  
+  /* TARGET SEMUA ELEMEN INTERAKTIF */
+  button,
+  .nav-item,
+  .nav-wa,
+  .nav-avatar,
+  a{
+    transition:
+      transform .15s cubic-bezier(.4,0,.2,1),
+      box-shadow .15s ease,
+      filter .15s ease;
+  }
+  
+  /* DESKTOP HOVER (HALUS) */
+  @media (hover:hover){
+    button:hover,
+    .nav-item:hover,
+    .nav-wa:hover,
+    .nav-avatar:hover{
+      transform: translateY(-2px);
+    }
+  }
+  
+  /* SAAT DIKLIK / TAP */
+  .active-touch,
+  button:active,
+  .nav-item:active,
+  .nav-wa:active,
+  .nav-avatar:active{
+    transform: translateY(-3px) scale(1.02);
+    box-shadow:
+      0 8px 18px rgba(0,0,0,.25),
+      var(--glow);
+    filter: brightness(1.05);
+  }
+</style>
+</head>
+
+<body>
+
+<div class="header"></div>
+
+<div class="container">
+
+  <!-- HISTORIS -->
+  <div class="card">
+    <div class="bold" style="margin-bottom:10px;">Historis Pengambilan</div>
+    <div id="list"></div>
+    <div id="total" class="total-inline"></div>
+  </div>
+
+
+  <!-- HEALTH -->
+  <div id="tracking" class="card health-card" style="display:none;">
+    <div class="health-header">
+      <div>
+        <div class="bold">Insight Kesehatan</div>
+        <div class="small">Monitoring cairan tubuh</div>
+      </div>
+      <div class="health-badge" id="trackStatus"></div>
+    </div>
+
+    <div class="trackRow">
+      <svg class="bodySvg" viewBox="0 0 512 512">
+        <path
+          id="bodyFill"
+          class="bodyPath"
+          d="M225 25v30h62V25h-62zm8 48v28.6l-5 2.5c-17 8.5-40.6 16.3-59.4 27.6-9.6 5.8-17.6 12-23.2 19.3h221.2c-5.6-7.3-13.5-13.6-23.2-19.3-18.8-11.3-42.4-19.1-59.4-27.6l-5-2.5V73h-46zm-112 96v16h270v-16H121zm16 34v28h238v-28H137zm-16 46v30h270v-30H121zm16 48v94h238v-94H137zm0 112v39c0 1 1.1 4.9 4 9.3 2.9 4.3 7.4 9.3 12.8 13.8 10.8 9 25.2 15.9 38.2 15.9h128c13 0 27.4-6.9 38.2-15.9 5.4-4.5 9.9-9.5 12.8-13.8 2.9-4.4 4-8.3 4-9.3v-39H137z"
+          fill="#d1d5db"
+          
+        />
+         <text
+          x="256"
+          y="330"
+          text-anchor="middle"
+          dominant-baseline="middle"
+          class="svgText">
+      
+          <tspan x="256" dy="0">Air Godogan</tspan>
+          <tspan x="256" dy="34" class="svgTextBold">FAMILI WATER</tspan>
+        </text>
+      </svg>
+
+      <div style="flex:1;">
+        <div class="progressBarMini">
+          <div id="progressFill" class="progressFillMini"></div>
+        </div>
+        <div class="small" id="trackDetail" style="margin-top:8px;"></div>
+        <div class="status" id="trackResult"></div>
+      </div>
+    </div>
+        <!-- POLA KONSUMSI -->
+    <div class="pattern-box">
+      <div class="bold">Pola Konsumsi</div>
+      <div class="pattern-row">
+        <span>Rata-rata jarak pengambilan</span>
+        <b id="avgGap">-</b>
+      </div>
+      <div class="pattern-row">
+        <span>Konsistensi</span>
+        <b id="consistency">-</b>
+      </div>
+      <div class="small" id="healthNarrative" style="margin-top:6px;"></div>
+    
+      <!-- MINI EVENT GRAPH -->
+      <div class="event-graph" id="eventGraph"></div>
+    </div>
+        <!-- FOOTER TRACKING -->
+    <div class="health-footer">
+      FAMILI WATER 2026©
+    </div>
+  </div>
+</div>
+<!-- POPUP POLA KONSUMSI -->
+<div id="healthPopup" class="popup-overlay">
+  <div class="popup-card">
+    <div class="popup-header">
+      <span id="popupBadge" class="popup-badge"></span>
+      <button class="popup-close" onclick="closePopup()">✕</button>
+    </div>
+
+    <h3 id="popupTitle"></h3>
+    <p id="popupContent"></p>
+
+    <button class="popup-btn" onclick="closePopup()">Mengerti</button>
+  </div>
+</div>
+<nav class="navbar">
+  <a href="index.html" class="nav-item" data-page="index.html">
+    <svg width="36" viewBox="0 0 1664 1312" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path d="M1408 768v480q0 26-19 45t-45 19H960V928H704v384H320q-26 0-45-19t-19-45V768q0-1 .5-3t.5-3l575-474l575 474q1 2 1 6zm223-69l-62 74q-8 9-21 11h-3q-13 0-21-7L832 200L140 777q-12 8-24 7q-13-2-21-11l-62-74q-8-10-7-23.5T37 654L756 55q32-26 76-26t76 26l244 204V64q0-14 9-23t23-9h192q14 0 23 9t9 23v408l219 182q10 8 11 21.5t-7 23.5z" fill="currentColor"/></svg>
+    <span>Home</span>
+  </a>
+
+  <a href="game.html" class="nav-item" data-page="game.html">
+    <svg width="36" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path d="M15.9 5.5C15.3 4.5 14.2 4 13 4H7c-1.2 0-2.3.5-2.9 1.5c-2.3 3.5-2.8 8.8-1.2 9.9c1.6 1.1 5.2-3.7 7.1-3.7s5.4 4.8 7.1 3.7c1.6-1.1 1.1-6.4-1.2-9.9zM8 9H7v1H6V9H5V8h1V7h1v1h1v1zm5.4.5c0 .5-.4.9-.9.9s-.9-.4-.9-.9s.4-.9.9-.9s.9.4.9.9zm1.9-2c0 .5-.4.9-.9.9s-.9-.4-.9-.9s.4-.9.9-.9s.9.4.9.9z" fill="currentColor"/></svg>
+    <span>Game</span>
+  </a>
+
+  <a href="https://wa.me/6285759995235?text=Ang%20pengen%20banyu" target="_blank" class="nav-wa">
+    <img src="logofw.png" alt="WA">
+  </a>
+
+  <a href="riwayat.html" class="nav-item" data-page="riwayat.html">
+    <svg width="36" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path class="uim-primary" d="M12 2a10.017 10.017 0 0 0-6.994 2.872V3a1 1 0 0 0-2 0v4.5a1 1 0 0 0 1 1h4.5a1 1 0 0 0 0-2H6.218A7.98 7.98 0 1 1 4 12a1 1 0 0 0-2 0A10 10 0 1 0 12 2z" fill="currentColor"/><path class="uim-primary" d="M14 13h-2a1 1 0 0 1-1-1V9a1 1 0 0 1 2 0v2h1a1 1 0 0 1 0 2z" fill="currentColor"/><path class="uim-tertiary" d="M12 4a8.008 8.008 0 0 0-5.782 2.5h2.288a1 1 0 0 1 0 2h-4.5a.99.99 0 0 1-.978-.889A9.922 9.922 0 0 0 2 12a1 1 0 0 1 2 0a8 8 0 1 0 8-8zm2 9h-2a1 1 0 0 1-1-1V9a1 1 0 0 1 2 0v2h1a1 1 0 0 1 0 2z" opacity=".5" fill="currentColor"/></svg>
+    <span>Riwayat</span>
+  </a>
+
+  <a href="profil.html" class="nav-item nav-profile" data-page="profil.html">
+    <div class="nav-avatar">
+    <svg width="36" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><g fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M24 42c9.941 0 18-8.059 18-18S33.941 6 24 6S6 14.059 6 24s8.059 18 18 18zm0 2c11.046 0 20-8.954 20-20S35.046 4 24 4S4 12.954 4 24s8.954 20 20 20z" fill="currentColor"/><path d="M12 35.63c0-1.033.772-1.906 1.8-2.02c7.715-.854 12.72-.777 20.418.019a1.99 1.99 0 0 1 1.108 3.472c-9.085 7.919-14.277 7.81-22.686.008c-.41-.38-.64-.92-.64-1.478z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M34.115 34.623c-7.637-.79-12.57-.864-20.206-.019c-.514.057-.909.496-.909 1.027c0 .286.119.557.32.745c4.168 3.866 7.326 5.613 10.413 5.624c3.098.011 6.426-1.722 10.936-5.652a.99.99 0 0 0-.554-1.724zM13.69 32.616c7.796-.863 12.874-.785 20.632.018a2.99 2.99 0 0 1 1.662 5.221c-4.575 3.988-8.385 6.16-12.257 6.145c-3.883-.014-7.525-2.223-11.766-6.158A3.018 3.018 0 0 1 11 35.63a3.028 3.028 0 0 1 2.69-3.015z" fill="currentColor"/><path d="M32 20a8 8 0 1 1-16 0a8 8 0 0 1 16 0z" fill="currentColor"/><path fill-rule="evenodd" clip-rule="evenodd" d="M24 26a6 6 0 1 0 0-12a6 6 0 0 0 0 12zm0 2a8 8 0 1 0 0-16a8 8 0 0 0 0 16z" fill="currentColor"/></g></svg>
+
+    </div>
+    <span>Profil</span>
+  </a>
+</nav>
+
+<script>
+  // ===== THEME SYNC DARI PROFIL =====
+  const THEME_KEY = "app-theme";
+  const savedTheme = localStorage.getItem(THEME_KEY);
+
+  if(savedTheme){
+    document.body.classList.add(`theme-${savedTheme}`);
+  } else {
+    document.body.classList.add("theme-light");
+  }
+
+  firebase.initializeApp({
+    apiKey:"AIzaSyCl13_a4x-BQnWNUjf9JOQX1DKc-HxLBys",
+    authDomain:"klien-39696.firebaseapp.com",
+    projectId:"klien-39696"
+  });
+
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+  const DOCTOR_MODE = true;
+  let LAST_CONSISTENCY_TYPE = null;
+
+  // ===== CACHE =====
+  const CACHE_TTL = 24 * 60 * 60 * 1000; // 1 hari
+
+  function setCache(key, data){
+    localStorage.setItem(key, JSON.stringify({
+      updatedAt: Date.now(),
+      data
+    }));
+  }
+
+  function getCache(key){
+    const raw = localStorage.getItem(key);
+    if(!raw) return null;
+
+    const cache = JSON.parse(raw);
+    if(Date.now() - cache.updatedAt > CACHE_TTL) return null;
+
+    return cache.data;
+  }
+
+  auth.onAuthStateChanged(async user => {
+    if(!user){
+      document.getElementById("list").innerHTML = `<div class="error">Belum login</div>`;
+      return;
+    }
+
+    // 1️⃣ Cek cache dulu
+    const cached = getCache("riwayat_" + user.uid);
+    if(cached){
+      renderRiwayatCached(cached);
+    }
+
+    // 2️⃣ tetap fetch Firestore di background (update cache)
+    await loadUserRiwayat(user.uid);
+  });
+
+  async function loadUserRiwayat(uid){
+    let namaID = null;
+    const m = await db.collection("members").doc(uid).get();
+    if(m.exists) namaID = m.data().namaID;
+    if(!namaID){
+      const a = await db.collection("agens").doc(uid).get();
+      if(a.exists) namaID = a.data().namaID;
+    }
+
+    const snap = await db.collection("riwayat").where("nama","==",namaID).get();
+    
+    // simpan cache
+    const dataForCache = snap.docs.map(d => ({
+      id: d.id,
+      ...d.data()
+    }));
+    setCache("riwayat_" + uid, { namaID, data: dataForCache });
+
+    renderRiwayat(snap);
+  }
+
+  function renderRiwayatCached(cache){
+    // buat snapshot palsu dari cache supaya renderRiwayat tetap bisa dipakai
+    const fakeSnap = {
+      docs: cache.data.map(d => ({
+        id: d.id,
+        data: () => d
+      }))
+    };
+    renderRiwayat(fakeSnap);
+  }
+
+  function renderRiwayat(snap){
+    const list = document.getElementById("list");
+    const totalBox = document.getElementById("total");
+    list.innerHTML = ""; 
+    totalBox.innerHTML = "";
+
+    let total = 0, first = null;
+    snap.docs.forEach(d => {
+      const t = d.data().tanggal?.toDate ? d.data().tanggal.toDate() : new Date(d.data().tanggal);
+      if(t && (!first || t < first)) first = t;
+      total += Number(d.data().pengambilan || 0);
+
+      list.innerHTML += `
+        <div class="riwayat-item">
+          <div class="bold">${t ? t.toLocaleDateString("id-ID") : "-"}</div>
+          <div class="small">Pengambilan ${d.data().pengambilan}</div>
+        </div>`;
+    });
+
+    totalBox.innerHTML = `<span class="small">Total</span><b>${total}</b>`;
+
+    const liter = total * 19;
+    const days = Math.max(1, Math.floor((Date.now() - first) / 86400000) + 1);
+    const target = days * 8;
+    const diff = target - liter;
+    const prog = Math.min(100, Math.round(liter / target * 100));
+
+    if(!first){
+      document.getElementById("tracking").style.display = "none";
+      return;
+    }
+
+    let color="rgba(34,197,94,.45)";
+    let badge = DOCTOR_MODE ? "Status Adekuat" : "Sehat";
+    let text  = DOCTOR_MODE
+      ? "Asupan cairan berada dalam rentang kebutuhan fisiologis."
+      : "Cairan tubuh tercukupi";
+
+    if(diff >= 3 && diff <= 5){
+      color="rgba(245,158,11,.45)";
+      badge = DOCTOR_MODE ? "Perlu Evaluasi" : "Perhatian";
+      text  = DOCTOR_MODE
+        ? "Asupan cairan mendekati batas minimal kebutuhan harian."
+        : "Perlu tambah minum";
+    }
+    else if(diff >= 6){
+      color="rgba(239,68,68,.45)";
+      badge = DOCTOR_MODE ? "Defisit Cairan" : "Kurang Sehat";
+      text  = DOCTOR_MODE
+        ? "Terdapat indikasi defisit cairan. Disarankan peningkatan asupan."
+        : "Kekurangan cairan";
+    }
+
+    document.getElementById("tracking").style.display = "block";
+    document.getElementById("progressFill").style.width = prog + "%";
+    document.getElementById("progressFill").style.background = color;
+    document.getElementById("trackDetail").innerText =
+      `Total ${liter} L • Target ${target} L • Selisih ${diff} L`;
+    document.getElementById("trackResult").innerText = text;
+    document.getElementById("trackStatus").innerText = badge;
+
+    const badgeEl = document.getElementById("trackStatus");
+    badgeEl.style.background =
+      diff >= 6 ? "rgba(239,68,68,.18)" :
+      diff >= 3 ? "rgba(245,158,11,.18)" :
+      "rgba(34,197,94,.18)";
+    badgeEl.style.color =
+      diff >= 6 ? "#7f1d1d" :
+      diff >= 3 ? "#78350f" :
+      "#166534";
+
+    document.getElementById("bodyFill").setAttribute("fill", color);
+
+    // ===== POLA KONSUMSI =====
+    let dates = [];
+    snap.docs.forEach(doc => {
+      const t = doc.data().tanggal?.toDate ? doc.data().tanggal.toDate() : new Date(doc.data().tanggal);
+      if(t) dates.push(t);
+    });
+    dates.sort((a,b)=>a-b);
+
+    let gaps = [];
+    for(let i=1;i<dates.length;i++){
+      gaps.push(Math.round((dates[i]-dates[i-1])/86400000));
+    }
+    const avgGap = gaps.length ? Math.round(gaps.reduce((a,b)=>a+b,0)/gaps.length) : 0;
+
+    let consistency = "Konsisten";
+    if(avgGap>=5 && avgGap<=7) consistency="Cukup";
+    if(avgGap>7) consistency="Jarang";
+
+    if(consistency === "Konsisten") LAST_CONSISTENCY_TYPE = "good";
+    else if(consistency === "Cukup") LAST_CONSISTENCY_TYPE = "medium";
+    else if(consistency === "Jarang") LAST_CONSISTENCY_TYPE = "bad";
+
+    document.getElementById("avgGap").innerText = avgGap ? `${avgGap} hari` : "-";
+    document.getElementById("consistency").innerText = consistency;
+
+    // ===== NARASI OTOMATIS =====
+    let narrative = DOCTOR_MODE
+      ? "Distribusi asupan cairan menunjukkan pola yang adekuat."
+      : "Pola konsumsi cairan Anda terjaga dengan baik.";
+
+    if(consistency==="Cukup"){
+      narrative = DOCTOR_MODE
+        ? "Terdapat variasi interval asupan cairan, disarankan perbaikan konsistensi."
+        : "Pola konsumsi Anda cukup baik, disarankan menjaga interval.";
+    }
+
+    if(consistency==="Jarang"){
+      narrative = DOCTOR_MODE
+        ? "Interval asupan cairan relatif panjang dan berpotensi menyebabkan defisit hidrasi."
+        : "Pengambilan air cenderung jarang, disarankan lebih rutin.";
+    }
+
+    document.getElementById("healthNarrative").innerText = narrative;
+
+    // ===== POPUP POLA KONSUMSI =====
+    setTimeout(() => {
+      if(consistency === "Konsisten") showHealthPopup("good");
+      else if(consistency === "Cukup") showHealthPopup("medium");
+      else if(consistency === "Jarang") showHealthPopup("bad");
+    }, 600);
+
+    // ===== MINI EVENT GRAPH =====
+    const graph = document.getElementById("eventGraph");
+    graph.innerHTML = "";
+
+    let bars = [];
+    const lastEvents = snap.docs.slice(-6);
+
+    lastEvents.forEach(d => {
+      const v = d.data().pengambilan || 0;
+      const h = Math.min(100, v * 12);
+
+      const bar = document.createElement("div");
+      bar.className = "event-bar";
+      bar.dataset.height = h;
+
+      graph.appendChild(bar);
+      bars.push(bar);
+    });
+
+    // ===== ANIMASI TERKONTROL =====
+    let animInterval = null;
+
+    function animateUp(){
+      bars.forEach(bar => bar.style.height = bar.dataset.height + "%");
+    }
+    function animateDown(){
+      bars.forEach(bar => bar.style.height = "0%");
+    }
+
+    // stop interval jika sudah ada
+    if(animInterval) clearInterval(animInterval);
+
+    setTimeout(() => animateUp(), 500);
+
+    animInterval = setInterval(() => {
+      animateDown();
+      setTimeout(() => animateUp(), 5000);
+    }, 4000);
+  }
+
+  /* ===============================
+     POPUP ARTIKEL POLA KONSUMSI
+  =============================== */
+  function showHealthPopup(type){
+    const popup = document.getElementById("healthPopup");
+    const badge = document.getElementById("popupBadge");
+    const title = document.getElementById("popupTitle");
+    const content = document.getElementById("popupContent");
+
+    if(type==="good"){
+      badge.innerText = "STABIL";
+      badge.style.background="rgba(34,197,94,.2)";
+      badge.style.color="#166534";
+
+      title.innerText="Pola Konsumsi Stabil";
+      content.innerHTML=`
+        Konsumsi air Anda tergolong <b>stabil dan terjaga</b>.
+        Jarak pengambilan yang konsisten menunjukkan kebutuhan cairan harian terpenuhi dengan baik.
+        <br><br>
+        Pola ini membantu menjaga kualitas hidrasi tubuh dan efisiensi aktivitas sehari-hari.
+      `;
+    }
+
+    if(type==="medium"){
+      badge.innerText="FLUKTUATIF";
+      badge.style.background="rgba(245,158,11,.2)";
+      badge.style.color="#78350f";
+
+      title.innerText="Pola Konsumsi Fluktuatif";
+      content.innerHTML=`
+        Pola konsumsi menunjukkan <b>variasi jarak pengambilan</b>.
+        Kondisi ini masih tergolong wajar, namun perlu sedikit perhatian.
+        <br><br>
+        Menjaga ritme konsumsi akan membantu kebutuhan cairan tetap optimal.
+      `;
+    }
+
+    if(type==="bad"){
+      badge.innerText="RENDAH";
+      badge.style.background="rgba(239,68,68,.2)";
+      badge.style.color="#7f1d1d";
+
+      title.innerText="Pola Konsumsi Rendah";
+      content.innerHTML=`
+        Konsumsi air tercatat <b>cukup jarang</b> dengan jeda yang panjang.
+        Kondisi ini berpotensi membuat asupan cairan kurang optimal.
+        <br><br>
+        Disarankan meningkatkan keteraturan konsumsi air.
+      `;
+    }
+
+    popup.classList.add("show");
+  }
+
+  function closePopup(){
+    document.getElementById("healthPopup").classList.remove("show");
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const patternCard = document.querySelector(".pattern-box");
+    if(!patternCard) return;
+
+    patternCard.addEventListener("click", () => {
+      if(LAST_CONSISTENCY_TYPE){
+        showHealthPopup(LAST_CONSISTENCY_TYPE);
+      }
+    });
+  });
+
+  /* NAVBAR ACTIV */
+  const currentPage = location.pathname.split("/").pop();
+
+  document.querySelectorAll(".nav-item").forEach(item=>{
+    if(item.dataset.page === currentPage){
+      item.classList.add("active");
+    }
+  });
+
+  /* NAVBAR SCROLL BEHAVIOR */
+  let lastScrollY = window.scrollY;
+  const navbar = document.querySelector(".navbar");
+
+  window.addEventListener("scroll", ()=>{
+    const currentScroll = window.scrollY;
+
+    if(currentScroll > lastScrollY && currentScroll > 80){
+      navbar.classList.add("hide");
+    } else {
+      navbar.classList.remove("hide");
+    }
+
+    lastScrollY = currentScroll;
+  });
+
+  /* NAVBAR PROFILE PHOTO SYNC */
+  function loadNavbarAvatar(){
+    const avatarNav = document.querySelector(".nav-avatar");
+    if(!avatarNav) return;
+
+    const foto = localStorage.getItem("fotoProfil") || "default.png";
+    const finalFoto = (foto && foto !== "") ? foto : "default.png";
+
+    avatarNav.innerHTML = `
+      <img src="${finalFoto}" alt="Profil" onerror="this.src='default.png'">
+    `;
+  }
+
+  loadNavbarAvatar();
+
+  /*EFEK TOUCH*/
+  document.querySelectorAll("button, .nav-item, .nav-wa, .nav-avatar").forEach(el => {
+    el.addEventListener("touchstart", () => {
+      el.classList.add("active-touch");
+    });
+    el.addEventListener("touchend", () => {
+      el.classList.remove("active-touch");
+    });
+  });
+  
+</script>
+
+</body>
+</html>
