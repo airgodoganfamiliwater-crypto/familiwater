@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<link rel="manifest" href="/manifest.json">
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2563eb">
-<link rel="icon" href="/ikon-512.png">
+<link rel="icon" href="ikon-512.png">
 <title>Dashboard Member</title>
 
 <!-- Google Fonts -->
@@ -1737,11 +1737,11 @@ body.theme-future .header{
 </script>
 <script>
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/service-worker.js")
+  navigator.serviceWorker.register("service-worker.js")
     .then(() => console.log("PWA SW registered"))
     .catch(err => console.log("PWA SW failed", err));
 
-  navigator.serviceWorker.register("/firebase-messaging-sw.js")
+  navigator.serviceWorker.register("firebase-messaging-sw.js")
     .then(() => console.log("FCM SW registered"))
     .catch(err => console.log("FCM SW failed", err));
 }
@@ -1758,8 +1758,8 @@ messaging.onMessage((payload) => {
 
     new Notification(title, {
       body: body,
-      icon: notification.icon || "/ikon-512.png",
-      badge: "/ikon-512.png",
+      icon: notification.icon || "ikon-512.png",
+      badge: "ikon-512.png",
       data: payload.data || {}
     });
   }

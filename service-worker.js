@@ -1,11 +1,10 @@
-const CACHE_NAME = "familiwater-v1";
+const CACHE_NAME = "familiwater-v2";
 const urlsToCache = [
-  "/",
-  "/profil.html",
-  "/game.html",
-  "/logofw.png",
-  "/ikon-512.png",
-  "/ikon-192.png"
+  "profil.html",
+  "game.html",
+  "logofw.png",
+  "ikon-512.png",
+  "ikon-192.png"
 ];
 
 self.addEventListener("install", (event) => {

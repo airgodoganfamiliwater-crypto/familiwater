@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<link rel="manifest" href="/manifest.json">
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#2563eb">
-<link rel="icon" href="/ikon-512.png">
+<link rel="icon" href="ikon-512.png">
 <title>Profil</title>
 
 <!-- Firebase -->
@@ -1214,7 +1214,7 @@ function loadNavbarAvatar(){
 
 loadNavbarAvatar();
   // ===== Install Button + Popup =====
-  const installBtnProfile = document.getElementById("installBtnProfile");
+  const installBtn = document.getElementById("installBtn");
   const installOverlay = document.getElementById("installOverlay");
   const installPopupBtn = document.getElementById("installPopupBtn");
   
@@ -1229,11 +1229,11 @@ loadNavbarAvatar();
   // 2. hide button kalau dibuka dari PWA
   const isInPWA = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
   if (isInPWA) {
-    installBtnProfile.style.display = "none";
+    installBtn.style.display = "none";
   }
   
   // 3. klik tombol => popup muncul
-  installBtnProfile.addEventListener("click", () => {
+  installBtn.addEventListener("click", () => {
     installOverlay.classList.add("show");
     installOverlay.style.display = "flex";
   });
