@@ -3,7 +3,7 @@
   "short_name": "Famili Water",
   "description": "Aplikasi resmi Famili Water untuk pemesanan dan monitoring",
   "lang": "id-ID",
-  "start_url": "/",
+  "start_url": "index.html",
   "display": "standalone",
   "background_color": "#0041cd",
   "theme_color": "#2563eb",

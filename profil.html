@@ -1213,56 +1213,77 @@ function loadNavbarAvatar(){
 }
 
 loadNavbarAvatar();
-  // ===== Install Button + Popup =====
+
   const installBtn = document.getElementById("installBtn");
   const installOverlay = document.getElementById("installOverlay");
   const installPopupBtn = document.getElementById("installPopupBtn");
-  
+
   let deferredPrompt = null;
-  
-  // 1. detect beforeinstallprompt
+
+  // 1️⃣ Tangkap event install dari browser
   window.addEventListener("beforeinstallprompt", (e) => {
     e.preventDefault();
     deferredPrompt = e;
+
+    // tombol baru boleh aktif
+    installBtn.style.display = "flex";
   });
-  
-  // 2. hide button kalau dibuka dari PWA
-  const isInPWA = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+
+  // 2️⃣ Sembunyikan tombol kalau sudah PWA
+  const isInPWA =
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.navigator.standalone === true;
+
   if (isInPWA) {
     installBtn.style.display = "none";
   }
-  
-  // 3. klik tombol => popup muncul
+
+  // 3️⃣ Klik tombol install → popup custom
   installBtn.addEventListener("click", () => {
-    installOverlay.classList.add("show");
+    if (!deferredPrompt) {
+      showToast("Install belum tersedia, buka lewat browser Chrome", "error");
+      return;
+    }
+
     installOverlay.style.display = "flex";
+    requestAnimationFrame(() => {
+      installOverlay.classList.add("show");
+    });
   });
-  
-  // 4. klik area luar popup => popup hilang
+
+  // 4️⃣ Klik luar popup → tutup
   installOverlay.addEventListener("click", (e) => {
     if (e.target === installOverlay) {
       installOverlay.classList.remove("show");
-      installOverlay.style.display = "none";
+      setTimeout(() => {
+        installOverlay.style.display = "none";
+      }, 200);
     }
   });
-  
-  // 5. klik install => proses install
+
+  // 5️⃣ Klik INSTALL → munculkan prompt browser
   installPopupBtn.addEventListener("click", async () => {
-    if (!deferredPrompt) {
-      alert("Install belum tersedia. Coba ulangi setelah beberapa saat.");
-      return;
-    }
-  
+    if (!deferredPrompt) return;
+
     installOverlay.classList.remove("show");
     installOverlay.style.display = "none";
-  
+
     deferredPrompt.prompt();
-    const choice = await deferredPrompt.userChoice;
-  
-    if (choice.outcome === "accepted") {
+
+    const { outcome } = await deferredPrompt.userChoice;
+
+    if (outcome === "accepted") {
       localStorage.setItem("fwpwa_installed", "true");
+      deferredPrompt = null;
     }
   });
+
+  // 6️⃣ Optional: deteksi sudah terinstall
+  window.addEventListener("appinstalled", () => {
+    installBtn.style.display = "none";
+    console.log("PWA berhasil di-install");
+  });
+
 </script>
 <script>
   let deferredPrompt;
