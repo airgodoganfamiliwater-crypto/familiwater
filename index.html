@@ -1735,18 +1735,7 @@ body.theme-future .header{
     });
   });
 </script>
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/firebase-messaging-sw.js')
-    .then(reg => {
-      console.log('Service Worker aktif:', reg.scope);
-      window.swRegistration = reg; // optional, tapi berguna
-    })
-    .catch(err => {
-      console.error('Service Worker gagal:', err);
-    });
-}
-</script>
+
 <script>
   // ===== Notifikasi (Foreground) =====
   if ('serviceWorker' in navigator) {

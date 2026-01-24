@@ -308,14 +308,5 @@
     function rotateBlock(){if(!playing)return;const r=piece.shape[0].map((_,i)=>piece.shape.map(r=>r[i]).reverse());const o=piece.shape;piece.shape=r;if(collide())piece.shape=o;drawStack();}
     document.addEventListener('keydown',e=>{if(!playing)return;if(e.key==='ArrowLeft')moveBlock('left');else if(e.key==='ArrowRight')moveBlock('right');else if(e.key==='ArrowDown')moveBlock('down');else if(e.key==='ArrowUp')rotateBlock();});
   </script>
-  <script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js')
-      .then(() => console.log('✅ Service Worker aktif'))
-      .catch(err => console.error('SW gagal:', err));
-  });
-}
-</script>
 </body>
 </html>

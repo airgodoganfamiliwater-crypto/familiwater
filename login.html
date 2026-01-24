@@ -307,6 +307,7 @@
   } else {
     document.body.classList.add("theme-light");
   }
+
   // ===== Firebase Setup =====
   const firebaseConfig = {
     apiKey: "AIzaSyCl13_a4x-BQnWNUjf9JOQX1DKc-HxLBys",
@@ -320,12 +321,10 @@
   const auth = firebase.auth();
   const db = firebase.firestore();
   const messaging = firebase.messaging();
-
-  // ===== Elements =====
   const loginForm = document.getElementById('loginForm');
   const errorMsg = document.getElementById('errorMsg');
 
-  // ===== REGISTER SERVICE WORKER =====
+ // ===== REGISTER SERVICE WORKER =====
   async function registerSW() {
     if ('serviceWorker' in navigator) {
       try {
@@ -361,13 +360,17 @@
     }
   }
 
+  // ===== LOGIN =====
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     errorMsg.textContent = "";
-
+  
+    const loginBtn = document.getElementById("loginBtn");
+    loginBtn.classList.add("loading");
+  
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
-
+  
     try {
       // ===== Firebase Auth Login =====
       const userCredential = await auth.signInWithEmailAndPassword(email, password);
@@ -389,7 +392,7 @@
         await auth.signOut();
         return;
       }
-
+  
       // ===== CEK STATUS =====
       const status = userDoc.data().status;
       if (status !== "approved") {
@@ -400,18 +403,32 @@
 
       // ===== SIMPAN ROLE (OPSIONAL TAPI PENTING KE DEPAN) =====
       localStorage.setItem("role", role);
-
+  
       // ===== SIMPAN FCM TOKEN =====
       await requestNotificationPermission(uid, role);
-
+  
       // ===== LOGIN SUKSES =====
       window.location.href = "index.html";
-
+  
     } catch (err) {
-      errorMsg.textContent = err.message;
+      let msg = "Password atau email salah";
+      if(err.code === "auth/wrong-password") msg = "Password salah";
+      if(err.code === "auth/user-not-found") msg = "Email tidak terdaftar";
+      showToast(msg, "error");
+      loginBtn.classList.remove("loading");
     }
   });
-</script>
 
+  // ===== TOAST =====
+  function showToast(message, type = "error"){
+    const toast = document.getElementById("toast");
+    toast.innerText = message;
+    toast.className = "toast show " + type;
+
+    setTimeout(() => {
+      toast.className = "toast " + type;
+    }, 5000);
+  }
+</script>
 </body>
 </html>
