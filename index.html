@@ -1747,5 +1747,30 @@ if ('serviceWorker' in navigator) {
     });
 }
 </script>
+<script>
+  // ===== Notifikasi (Foreground) =====
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/firebase-messaging-sw.js')
+      .then(reg => console.log("SW registered:", reg))
+      .catch(err => console.error("SW failed:", err));
+  }
+
+  const messaging = firebase.messaging();
+
+  // Notifikasi saat web sedang dibuka (foreground)
+  messaging.onMessage((payload) => {
+    console.log("Foreground message received:", payload);
+
+    // Tampilkan notifikasi
+    if (Notification.permission === "granted") {
+      const title = payload.notification.title;
+      const options = {
+        body: payload.notification.body,
+        icon: payload.notification.icon
+      };
+      new Notification(title, options);
+    }
+  });
+</script>
 </body>
 </html>
