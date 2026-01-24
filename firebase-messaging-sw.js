@@ -21,8 +21,8 @@ messaging.onBackgroundMessage(function(payload) {
 
   self.registration.showNotification(title, {
     body: body,
-    icon: '/ikon-512.png',
-    badge: '/ikon-512.png',
+    icon: './ikon-512.png',
+    badge: './ikon-512.png',
     image: notification.image || null,
     data: payload.data || {}
   });
