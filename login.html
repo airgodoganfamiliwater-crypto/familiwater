@@ -18,49 +18,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
 
 <style>
-  .bg-falling{
-    position:fixed;
-    inset:0;
-    pointer-events:none;
-    overflow:hidden;
-    z-index:3;
-  }
-  
-  .bg-falling img{
-    position:absolute;
-    top:-120px;
-    object-fit:cover;
-    animation-name: fall;
-    animation-timing-function: linear;
-    animation-iteration-count: infinite;
-    will-change: transform, opacity;
-    transform: translateZ(0);
-  }
-  
-  /* glow khusus FUTURE */
-  body.theme-future .bg-falling img{
-  filter:
-    drop-shadow(0 0 8px rgba(34,211,238,.35));
- }
-  @keyframes fall{
-    from{
-      transform: translate3d(0,-120px,0) rotate(0deg);
-      opacity:0;
-    }
-    to{
-      transform:
-        translate3d(var(--drift),120vh,0)
-        rotate(var(--rotate));
-      opacity:.12;
-    }
-  }
-  
-  /* konten di atas */
-  .page{
-    position:relative;
-    z-index:2;
-    background:transparent;
-  }
   /* ===============================
      GLOBAL RESET
   =============================== */
@@ -319,7 +276,6 @@
 </style>
 </head>
 <body>
-<div class="bg-falling"></div>
 <div class="page">
   <div class="container">
     <div class="logo-wrapper">
@@ -365,25 +321,6 @@
   const auth = firebase.auth();
   const db = firebase.firestore();
   const messaging = firebase.messaging();
-
-  // ===== REGISTER SERVICE WORKER =====
-   async function registerSW() {
-    if ('serviceWorker' in navigator) {
-      try {
-        await navigator.serviceWorker.register('service-worker.js');
-        console.log("PWA SW registered");
-      } catch (err) {
-        console.log("PWA SW gagal:", err);
-      }
-  
-      try {
-        await navigator.serviceWorker.register('firebase-messaging-sw.js');
-        console.log("FCM SW registered");
-      } catch (err) {
-        console.log("FCM SW gagal:", err);
-      }
-    }
-  }
 
   // ===== Fungsi untuk minta izin notif & simpan token =====
   async function requestNotificationPermission(uid, role) {

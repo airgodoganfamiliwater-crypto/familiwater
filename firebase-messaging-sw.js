@@ -15,20 +15,22 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage(function(payload) {
   console.log('[FCM] BG message:', payload);
 
-  const notification = payload.notification || {};
-  const title = notification.title || "Famili Water";
-  const body = notification.body || payload.data.body || "Ada pesan baru";
-
-  self.registration.showNotification(title, {
-    body: body,
-    icon: 'ikon-512.png',
-    badge: 'ikon-512.png',
-    image: notification.image || null,
-    data: payload.data || {}
-  });
+  self.registration.showNotification(
+    payload.notification.title,
+    {
+      body: payload.notification.body,
+      icon: 'ikon-512.png',
+      badge: 'ikon-512.png',
+      image: payload.notification.image || null,
+      data: payload.data || {}
+    }
+  );
 });
 
-self.addEventListener('notificationclick', function(event) {
-  event.notification.close();
-  event.waitUntil(clients.openWindow('/'));
+self.addEventListener('install', () => {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', () => {
+  self.clients.claim();
 });

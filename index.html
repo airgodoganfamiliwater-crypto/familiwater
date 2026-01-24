@@ -1736,34 +1736,16 @@ body.theme-future .header{
   });
 </script>
 <script>
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("service-worker.js")
-    .then(() => console.log("PWA SW registered"))
-    .catch(err => console.log("PWA SW failed", err));
-
-  navigator.serviceWorker.register("firebase-messaging-sw.js")
-    .then(() => console.log("FCM SW registered"))
-    .catch(err => console.log("FCM SW failed", err));
-}
-
-const messaging = firebase.messaging();
-
-messaging.onMessage((payload) => {
-  console.log("Foreground message received:", payload);
-
-  if (Notification.permission === "granted") {
-    const notification = payload.notification || {};
-    const title = notification.title || "Famili Water";
-    const body = notification.body || "Ada pesan baru";
-
-    new Notification(title, {
-      body: body,
-      icon: notification.icon || "ikon-512.png",
-      badge: "ikon-512.png",
-      data: payload.data || {}
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/firebase-messaging-sw.js')
+    .then(reg => {
+      console.log('Service Worker aktif:', reg.scope);
+      window.swRegistration = reg; // optional, tapi berguna
+    })
+    .catch(err => {
+      console.error('Service Worker gagal:', err);
     });
-  }
-});
+}
 </script>
 </body>
 </html>
