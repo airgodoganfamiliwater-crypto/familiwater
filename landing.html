@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#14b8a6">
+<link rel="icon" href="ikon-512.png">
+<title>Famili Helper</title>
+
+<!-- FONT -->
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+
+<style>
+/* ===============================
+   GLOBAL RESET
+=============================== */
+*{
+  box-sizing:border-box;
+  font-family:'Nunito',sans-serif;
+  -webkit-tap-highlight-color:transparent;
+}
+body{
+  margin:0;
+  min-height:100vh;
+  background:var(--bg);
+  color:var(--text);
+  transition:.35s ease;
+}
+
+/* ===============================
+   THEME ROOT
+=============================== */
+:root{
+  --primary:#14b8a6;         /* Biru kehijauan */
+  --primary-soft:rgba(20,184,166,.15);
+  --bg:#e0fdfa;              /* Latar belakang halaman */
+  --card:#ffffff;
+  --text:#0f172a;
+  --muted:#64748b;
+  --danger:#ef4444;
+  --border:#d1fae5;
+  --radius:18px;
+  --blur:10px;
+  --glow:none;
+}
+
+body.theme-dark{
+  --bg:#0a1f1b;
+  --card:#0f172a;
+  --text:#e5e7eb;
+  --muted:#94a3b8;
+  --primary:#2dd4bf;
+  --primary-soft:#134e4a;
+  --border:#134e4a;
+}
+
+body.theme-future{
+  --bg:radial-gradient(circle at top,#0a1f1b,#020617);
+  --card:rgba(15,23,42,.65);
+  --text:#e0f2fe;
+  --muted:#7dd3fc;
+  --primary:#2dd4bf;
+  --primary-soft:rgba(45,212,191,.15);
+  --danger:#fb7185;
+  --border:rgba(45,212,191,.35);
+  --glow:
+    0 0 12px rgba(45,212,191,.35),
+    0 0 26px rgba(45,212,191,.2);
+}
+
+/* ===============================
+   HEADER
+=============================== */
+.header{
+  height:240px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+body.theme-dark .header{background:#020617}
+body.theme-future .header{
+  background:radial-gradient(circle at top,rgba(34,211,238,.35),transparent 60%);
+}
+
+/* ===============================
+   LOGO
+=============================== */
+.logo-wrap{
+  width:196px;
+  height:196px;
+  border-radius:50%;
+  overflow:hidden;
+  animation:float 4s ease-in-out infinite;
+}
+.logo-wrap img{
+  width:100%;
+  height:100%;
+  object-fit:cover
+}
+
+/* ===============================
+   CONTAINER & CARD
+=============================== */
+.container{margin-top:-50px;padding:0 16px 40px}
+.card{
+  background:var(--card);
+  border-radius:var(--radius);
+  padding:22px;
+  border:1px solid var(--border);
+  box-shadow:0 14px 36px rgba(0,0,0,.15),var(--glow);
+  animation:fadeUp .6s ease;
+}
+
+.hero-title{font-size:22px;font-weight:900}
+.hero-desc{font-size:14px;color:var(--muted);line-height:1.6}
+
+.service{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:14px;
+  border-radius:18px;
+  background:color-mix(in srgb,var(--primary) 10%,transparent);
+  margin-bottom:12px;
+}
+.service-icon{
+  font-size:26px;
+}
+.service-text b{
+  display:block;
+}
+.service-text span{
+  font-size:12px;
+  color:var(--muted);
+}
+
+.btn{
+  margin-top:18px;
+  width:100%;
+  padding:14px;
+  border-radius:16px;
+  border:none;
+  background:var(--primary);
+  color:white;
+  font-weight:800;
+}
+
+.overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.4);
+  backdrop-filter:blur(6px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+  opacity:0;
+  pointer-events:none;
+  transition:.35s ease;
+}
+.overlay.show{
+  opacity:1;
+  pointer-events:auto;
+}
+.verify-card{
+  width:90%;
+  max-width:420px;
+  background:var(--card);
+  padding:24px;
+  border-radius:24px;
+  text-align:center;
+  box-shadow:0 20px 60px rgba(0,0,0,.35),var(--glow);
+  animation:pop .5s ease;
+}
+.verify-card h3{
+  margin:10px 0;
+}
+.verify-card p{
+  font-size:14px;
+  color:var(--muted);
+  line-height:1.6;
+}
+
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(18px)}
+  to{opacity:1}
+}
+@keyframes float{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-8px)}
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <div class="logo-wrap">
+    <img src="helper.png">
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- LANDING CARD -->
+  <div class="card">
+    <div class="hero-title">Famili Helper</div>
+    <div class="hero-desc">
+      Layanan bantuan kecil khusus pelanggan <b>Famili Water</b>.  
+      Titip beli, titip antar, atau bantu kebutuhan ringan sehari-hari.
+    </div>
+
+    <div style="margin-top:18px">
+      <div class="service">
+        <div class="service-icon">🛒</div>
+        <div class="service-text">
+          <b>Titip Belanja</b>
+          <span>Sembako, kebutuhan mendadak</span>
+        </div>
+      </div>
+
+      <div class="service">
+        <div class="service-icon">🍱</div>
+        <div class="service-text">
+          <b>Titip Makanan</b>
+          <span>Warung, jajanan, minuman</span>
+        </div>
+      </div>
+
+      <div class="service">
+        <div class="service-icon">📦</div>
+        <div class="service-text">
+          <b>Antar Barang Ringan</b>
+          <span>Dokumen, paket kecil</span>
+        </div>
+      </div>
+    </div>
+
+    <button id="startBtn" class="btn">Mulai Pesan</button>
+  </div>
+</div>
+
+<div id="verifyOverlay" class="overlay">
+  <div class="verify-card">
+    <div class="logo-wrap" style="margin:0 auto 10px">
+      <img src="logofw.png">
+    </div>
+    <h3>Lengkapi Data Dulu ✨</h3>
+    <p>
+      Untuk menggunakan <b>Famili Helper</b>,  
+      kami butuh <b>nomor WhatsApp</b> dan <b>alamat aktif</b>.
+    </p>
+    <button class="btn" onclick="goProfile()">Lengkapi Sekarang</button>
+  </div>
+</div>
+
+<!-- ===============================
+     FIREBASE
+=============================== -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+<script>
+/* ===============================
+   THEME SYNC
+=============================== */
+const THEME_KEY="app-theme";
+const savedTheme=localStorage.getItem(THEME_KEY);
+document.body.classList.add(savedTheme?`theme-${savedTheme}`:"theme-light");
+
+/* ===============================
+   FIREBASE INIT
+=============================== */
+firebase.initializeApp({
+  apiKey:"AIzaSyCl13_a4x-BQnWNUjf9JOQX1DKc-HxLBys",
+  authDomain:"klien-39696.firebaseapp.com",
+  projectId:"klien-39696"
+});
+
+const auth=firebase.auth();
+const db=firebase.firestore();
+let currentUserData=null;
+
+/* ===============================
+   AUTH FLOW
+=============================== */
+auth.onAuthStateChanged(async user=>{
+  if(!user){
+    location.href="login.html";
+    return;
+  }
+
+  let snap = await db.collection("members").doc(user.uid).get();
+  if(!snap.exists){
+    snap = await db.collection("agens").doc(user.uid).get();
+  }
+
+  if(!snap.exists){
+    alert("Akun tidak terdaftar");
+    auth.signOut();
+    return;
+  }
+
+  currentUserData = snap.data();
+});
+
+/* ===============================
+   BUTTON LOGIC
+=============================== */
+startBtn.onclick=()=>{
+  if(!currentUserData?.whatsapp || !currentUserData?.alamat){
+    verifyOverlay.classList.add("show");
+  }else{
+    location.href="helper.html";
+  }
+};
+
+function goRegister(){
+  location.href="register-helper.html";
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#14b8a6">
+<link rel="icon" href="ikon-512.png">
+<title>Lengkapi Data - Famili Helper</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+<style>
+*{
+  box-sizing:border-box;
+  font-family:'Nunito',sans-serif;
+  user-select:none;
+  -webkit-user-select:none;
+  outline:none;
+}
+body{
+  margin:0;
+  min-height:100vh;
+  background:var(--bg);
+  color:var(--text);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:16px;
+  -webkit-tap-highlight-color:transparent;
+}
+:root{
+  --primary:#14b8a6;         /* Biru kehijauan */
+  --primary-soft:rgba(20,184,166,.15);
+  --bg:#e0fdfa;              /* Latar belakang halaman */
+  --card:#ffffff;
+  --text:#0f172a;
+  --muted:#64748b;
+  --danger:#ef4444;
+  --border:#d1fae5;
+  --radius:18px;
+  --blur:10px;
+  --glow:none;
+}
+
+body.theme-dark{
+  --bg:#0a1f1b;
+  --card:#0f172a;
+  --text:#e5e7eb;
+  --muted:#94a3b8;
+  --primary:#2dd4bf;
+  --primary-soft:#134e4a;
+  --border:#134e4a;
+}
+
+body.theme-future{
+  --bg:radial-gradient(circle at top,#0a1f1b,#020617);
+  --card:rgba(15,23,42,.65);
+  --text:#e0f2fe;
+  --muted:#7dd3fc;
+  --primary:#2dd4bf;
+  --primary-soft:rgba(45,212,191,.15);
+  --danger:#fb7185;
+  --border:rgba(45,212,191,.35);
+  --glow:
+    0 0 12px rgba(45,212,191,.35),
+    0 0 26px rgba(45,212,191,.2);
+}
+
+.card{
+  max-width:420px;
+  width:100%;
+  background:var(--card);
+  padding:24px;
+  border-radius:var(--radius);
+  border:1px solid var(--border);
+  box-shadow:0 14px 36px rgba(0,0,0,.15),var(--glow);
+  animation:fadeUp .6s ease;
+}
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(18px)}
+  to{opacity:1}
+}
+
+h2{text-align:center;margin-bottom:16px;font-weight:900;font-size:1.6rem}
+label{font-size:13px;color:var(--muted);margin-top:8px;display:block}
+input,textarea{
+  width:100%;
+  margin:6px 0 14px;
+  padding:12px;
+  border-radius:14px;
+  border:1px solid var(--border);
+  background:transparent;
+  color:var(--text);
+  box-shadow:0 14px 36px rgba(0,0,0,.15),var(--glow);
+}
+textarea{resize:none}
+input[readonly]{opacity:.8}
+
+.btn{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:16px;
+  background:var(--primary);
+  color:#fff;
+  font-weight:800;
+  cursor:pointer;
+  margin-top:10px;
+  transition:.3s;
+}
+.btn.success{background:var(--success);}
+.btn:active{transform:scale(.97)}
+
+.small{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:6px;
+  text-align:center;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <h2>Lengkapi Data</h2>
+
+  <label>Nama Lengkap</label>
+  <input id="nama" readonly>
+
+  <label>Email</label>
+  <input id="email" readonly>
+
+  <label>WhatsApp *</label>
+  <input id="whatsapp" placeholder="08xxxx">
+
+  <label>Alamat Lengkap *</label>
+  <textarea id="alamat" rows="3"></textarea>
+
+  <button class="btn" id="btnLokasi" onclick="ambilLokasi()">📍 Share Lokasi</button>
+  <div class="small" id="lokasiInfo">Belum ada lokasi</div>
+
+  <button class="btn" style="margin-top:14px" onclick="simpan()">Simpan Data</button>
+</div>
+
+<script>
+/* THEME SYNC */
+const THEME_KEY="app-theme";
+const savedTheme=localStorage.getItem(THEME_KEY);
+document.body.classList.add(savedTheme?`theme-${savedTheme}`:"theme-light");
+
+/* FIREBASE INIT */
+firebase.initializeApp({
+  apiKey:"AIzaSyCl13_a4x-BQnWNUjf9JOQX1DKc-HxLBys",
+  authDomain:"klien-39696.firebaseapp.com",
+  projectId:"klien-39696"
+});
+const db=firebase.firestore();
+
+let currentDoc=null;
+let lokasi=null;
+
+/* AUTH */
+firebase.auth().onAuthStateChanged(async user=>{
+  if(!user) return location.href="login.html";
+
+  let doc=await db.collection("members").doc(user.uid).get();
+  if(!doc.exists) doc=await db.collection("agens").doc(user.uid).get();
+
+  if(!doc.exists){
+    alert("Data user tidak ditemukan");
+    return;
+  }
+
+  currentDoc=doc.ref;
+  const d=doc.data();
+  nama.value=d.namaLengkap||"";
+  email.value=d.email||"";
+});
+
+/* AMBIL LOKASI */
+function ambilLokasi(){
+  if(!navigator.geolocation){
+    alert("Browser tidak mendukung GPS");
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    pos=>{
+      lokasi = {
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude
+      };
+      lokasiInfo.innerText = `Lokasi berhasil di-share ✅ (${lokasi.lat.toFixed(5)}, ${lokasi.lng.toFixed(5)})`;
+      btnLokasi.classList.add("success");
+      btnLokasi.innerText = "📍 Lokasi Tersimpan";
+    },
+    err=>{
+      alert("Gagal mengambil lokasi. Pastikan izin lokasi diaktifkan.");
+      console.error(err);
+    }
+  );
+}
+
+/* SIMPAN DATA */
+function simpan(){
+  if(!whatsapp.value.trim() || !alamat.value.trim()){
+    alert("WhatsApp & alamat wajib diisi");
+    return;
+  }
+  if(!lokasi){
+    alert("Klik tombol 'Share Lokasi' dulu");
+    return;
+  }
+
+  currentDoc.update({
+    whatsapp: whatsapp.value.trim(),
+    alamat: alamat.value.trim(),
+    lokasi: lokasi,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(()=>{
+    alert("Data berhasil disimpan!");
+    location.href="helper.html";
+  }).catch(err=>{
+    alert("Gagal menyimpan data");
+    console.error(err);
+  });
+}
+
+const lokasiInfo = document.getElementById("lokasiInfo");
+const whatsapp = document.getElementById("whatsapp");
+const alamat = document.getElementById("alamat");
+const nama = document.getElementById("nama");
+const email = document.getElementById("email");
+const btnLokasi = document.getElementById("btnLokasi");
+</script>
+
+</body>
+</html>

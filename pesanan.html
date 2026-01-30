@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#14b8a6">
+<link rel="icon" href="ikon-512.png">
+<title>Pesanan Saya</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+<style>
+/* ===============================
+     GLOBAL RESET
+=============================== */
+*{
+  box-sizing:border-box;
+  font-family:'Nunito',sans-serif;
+  user-select:none;
+  -webkit-user-select:none;
+  outline:none;
+}
+
+body{
+  margin:0;
+  min-height:100vh;
+  background:var(--bg);
+  color:var(--text);
+  padding-bottom: 120px;
+  transition:background .3s ease,color .3s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* ===============================
+   ROOT THEME
+=============================== */
+:root{
+  --primary:#14b8a6;         /* Biru kehijauan */
+  --primary-soft:rgba(20,184,166,.15);
+  --bg:#e0fdfa;              /* Latar belakang halaman */
+  --card:#ffffff;
+  --text:#0f172a;
+  --muted:#64748b;
+  --danger:#ef4444;
+  --border:#d1fae5;
+  --radius:18px;
+  --blur:10px;
+  --glow:none;
+}
+
+body.theme-dark{
+  --bg:#0a1f1b;
+  --card:#0f172a;
+  --text:#e5e7eb;
+  --muted:#94a3b8;
+  --primary:#2dd4bf;
+  --primary-soft:#134e4a;
+  --border:#134e4a;
+}
+
+body.theme-future{
+  --bg:radial-gradient(circle at top,#0a1f1b,#020617);
+  --card:rgba(15,23,42,.65);
+  --text:#e0f2fe;
+  --muted:#7dd3fc;
+  --primary:#2dd4bf;
+  --primary-soft:rgba(45,212,191,.15);
+  --danger:#fb7185;
+  --border:rgba(45,212,191,.35);
+  --glow:
+    0 0 12px rgba(45,212,191,.35),
+    0 0 26px rgba(45,212,191,.2);
+}
+
+/* ================= HEADER ================= */
+.header{
+  height:125px;
+  background:var(--primary);
+  border-bottom-left-radius:36px;
+  border-bottom-right-radius:36px;
+}
+body.theme-dark .header{
+  background:#020617;
+}
+body.theme-future .header{
+  background:
+    radial-gradient(circle at top,rgba(34,211,238,.35),transparent 60%),
+    linear-gradient(135deg,#020617,#020617);
+  box-shadow:var(--glow);
+}
+
+/* ================= CONTAINER ================= */
+.container{
+  padding:0 16px 32px;
+  margin-top:-60px;
+}
+
+/* ================= CONTENT WRAPPER ================= */
+.content-box{
+  background:var(--card);
+  border-radius:var(--radius);
+  padding:18px;
+  box-shadow:0 12px 32px rgba(0,0,0,.08);
+  border:1px solid var(--border);
+  box-shadow:0 14px 36px rgba(0,0,0,.15),var(--glow);
+  animation:fadeUp .6s ease;
+}
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(18px)}
+  to{opacity:1}
+}
+
+/* ================= CARD ================= */
+.card{
+  background:var(--card);
+  border-radius:var(--radius);
+  padding:18px;
+  margin-bottom:18px;
+  box-shadow: 0 12px 32px rgba(0,0,0,.08);
+  border:1px solid var(--border);
+  transition: transform .25s ease, box-shadow .25s ease, background .25s ease;
+}
+
+body.theme-dark .card,
+body.theme-future .card{
+  backdrop-filter: blur(8px);
+}
+
+.card:hover{
+  transform:translateY(-2px);
+  box-shadow:0 18px 40px rgba(0,0,0,.12);
+}
+
+.small{font-size:12px;color:var(--muted)}
+.bold{font-weight:700}
+
+/* ================= SECTION TITLE ================= */
+.section-title {
+  font-weight: 900;
+  font-size: 18px;
+  margin: 20px 0 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.card strong { font-size: 15px; }
+.card p { margin: 6px 0; font-size: 14px; }
+
+/* ===== AKTIF MENCOLOK ===== */
+.card.active{
+  border-left:5px solid var(--primary);
+  background:var(--primary-soft);
+}
+
+/* ================= STATUS ================= */
+.status {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.status.diproses { background: #fef3c7; color: #92400e; }
+.status.dibatalkan { background: #fee2e2; color: #991b1b; }
+.status.Done { background: #dcfce7; color: #166534; }
+
+/* ================= COUNTDOWN ================= */
+.countdown {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--danger);
+}
+
+/* ================= BUTTON ================= */
+button {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 12px;
+  background: var(--danger);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+button:disabled {
+  background: #cbd5f5;
+  cursor: not-allowed;
+}
+
+.empty, .loading {
+  text-align: center;
+  color: var(--muted);
+  margin: 24px 0;
+}
+/* ================= BOTTOM NAVBAR ================= */
+.bottom-nav {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--card);
+  display: flex;
+  gap: 26px;
+  padding: 12px 20px;
+  border-radius: 28px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.15);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+  z-index: 999;
+}
+
+.nav-item {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  transition: .2s;
+}
+
+.nav-item svg {
+  width: 26px;
+  height: 26px;
+  background: var(--primary-soft);
+  padding: 8px;
+  border-radius: 50%;
+  fill: var(--primary);
+  margin-bottom: 4px;
+}
+
+.nav-item.active {
+  color: var(--primary);
+}
+
+.nav-item.active svg {
+  background: var(--primary);
+  fill: white;
+}
+/* ===== POPUP BATAL PESANAN ===== */
+#cancelOverlay{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.45);
+  backdrop-filter:blur(2px);
+  z-index:9998;
+}
+
+#cancelBox{
+  display:none;
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  background:var(--card);
+  padding:20px;
+  border-radius:18px;
+  box-shadow:0 12px 40px rgba(0,0,0,.25);
+  z-index:9999;
+  width:90%;
+  max-width:320px;
+  text-align:center;
+  border:1px solid var(--border);
+  animation:fadeUp .2s ease;
+}
+
+#cancelBox h3{
+  margin-top:0;
+  font-weight:900;
+}
+
+#cancelBox p{
+  font-size:14px;
+  color:var(--muted);
+}
+
+.cancel-actions{
+  display:flex;
+  gap:10px;
+  margin-top:16px;
+}
+
+.btn-cancel{
+  flex:1;
+  padding:10px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:transparent;
+  font-weight:700;
+  color:var(--text);
+}
+
+.btn-confirm{
+  flex:1;
+  padding:10px;
+  border-radius:12px;
+  border:none;
+  background:var(--danger);
+  color:#fff;
+  font-weight:900;
+}
+
+.btn-cancel:active,
+.btn-confirm:active{
+  transform:scale(.97);
+}
+</style>
+</head>
+
+<body>
+  <div class="header"></div>
+
+  <!-- ================= CONTENT ================= -->
+  <div class="container">
+    <div class="content-box">
+
+      <div class="section-title">Pesanan Aktif</div>
+      <div id="pesananAktif">
+        <div class="loading">Memuat pesanan...</div>
+      </div>
+
+      <div class="section-title">Riwayat Pesanan</div>
+      <div id="riwayatPesanan">
+        <div class="loading">Memuat riwayat...</div>
+      </div>
+
+    </div>
+  </div>
+<!-- ===== BOTTOM NAVIGATION ===== -->
+<div class="bottom-nav">
+
+  <div class="nav-item" onclick="location.href='index.html'">
+    <svg viewBox="0 0 24 24">
+      <path d="M3 12l9-9 9 9v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>
+    </svg>
+    <div>Home</div>
+  </div>
+
+  <div class="nav-item" onclick="location.href='helper.html'">
+    <svg viewBox="0 0 24 24">
+      <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 15h-2v-2h2zm0-4h-2V7h2z"/>
+    </svg>
+    <div>Pesan</div>
+  </div>
+
+  <div class="nav-item active" onclick="location.href='pesanan.html'">
+    <svg viewBox="0 0 24 24">
+      <path d="M4 4h16v2H4zm0 6h16v2H4zm0 6h16v2H4z"/>
+    </svg>
+    <div>Riwayat</div>
+  </div>
+
+</div>
+<!-- POPUP KONFIRMASI BATAL PESANAN -->
+<div id="cancelOverlay"></div>
+
+<div id="cancelBox">
+  <h3>⚠️ Batalkan Pesanan</h3>
+  <p>Yakin ingin membatalkan pesanan ini?</p>
+
+  <div class="cancel-actions">
+    <button onclick="closeCancelPopup()" class="btn-cancel">Tidak</button>
+    <button onclick="confirmCancelPesanan()" class="btn-confirm">Ya, Batalkan</button>
+  </div>
+</div>
+<script>
+  // ===== THEME SYNC DARI PROFIL =====
+  const THEME_KEY = "app-theme";
+  const savedTheme = localStorage.getItem(THEME_KEY);
+
+  if(savedTheme){
+    document.body.classList.add(`theme-${savedTheme}`);
+  } else {
+    document.body.classList.add("theme-light");
+  }
+  
+firebase.initializeApp({
+  apiKey: "AIzaSyCl13_a4x-BQnWNUjf9JOQX1DKc-HxLBys",
+  authDomain: "klien-39696.firebaseapp.com",
+  projectId: "klien-39696"
+});
+
+const db = firebase.firestore();
+const BATAS_BATAL = 5 * 60 * 1000;
+const countdownMap = {};
+let countdownTimer = null;
+let cancelPesananId = null;
+
+firebase.auth().onAuthStateChanged(user=>{
+  if(!user){ location.href="login.html"; return; }
+  loadPesanan(user.uid);
+});
+
+async function loadPesanan(uid){
+  const aktifEl = document.getElementById("pesananAktif");
+  const riwayatEl = document.getElementById("riwayatPesanan");
+
+  aktifEl.innerHTML = riwayatEl.innerHTML = `<div class="loading">Memuat...</div>`;
+
+  try{
+    const snap = await db.collection("pesananFamiliHelper").where("uid","==",uid).get();
+
+    if(snap.empty){
+      aktifEl.innerHTML = `<div class="empty">Tidak ada pesanan aktif</div>`;
+      riwayatEl.innerHTML = `<div class="empty">Belum ada riwayat</div>`;
+      return;
+    }
+
+    const data = snap.docs.map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+
+    aktifEl.innerHTML = "";
+    riwayatEl.innerHTML = "";
+    Object.keys(countdownMap).forEach(k=>delete countdownMap[k]);
+
+    data.forEach(d=>{
+      const created = d.createdAt?.toDate?.();
+      const endTime = created ? created.getTime() + BATAS_BATAL : null;
+
+      if(d.status === "diproses"){
+        aktifEl.innerHTML += `
+          <div class="card active">
+            <strong>${d.jenisLayanan || "-"}</strong>
+            <div class="small">${created?.toLocaleString("id-ID") || "-"}</div>
+            <p>${d.keterangan || "-"}</p>
+            <span class="status diproses">diproses</span>
+            <div class="countdown" id="cd-${d.id}"></div>
+            <button id="btn-${d.id}" onclick="batalkanPesanan('${d.id}', ${endTime})">
+              Batalkan Pesanan
+            </button>
+          </div>
+        `;
+        if(endTime) countdownMap[d.id] = endTime;
+      }
+
+      if(d.status === "Done" || d.status === "dibatalkan"){
+        riwayatEl.innerHTML += `
+          <div class="card">
+            <strong>${d.jenisLayanan || "-"}</strong>
+            <div class="small">${created?.toLocaleString("id-ID") || "-"}</div>
+            <p>${d.keterangan || "-"}</p>
+            <span class="status ${d.status}">${d.status}</span>
+          </div>
+        `;
+      }
+    });
+
+    startGlobalCountdown();
+  }catch(err){
+    console.error(err);
+    aktifEl.innerHTML = riwayatEl.innerHTML = `<div class="empty">Gagal memuat pesanan</div>`;
+  }
+}
+
+function startGlobalCountdown(){
+  if(countdownTimer) clearInterval(countdownTimer);
+  countdownTimer = setInterval(()=>{
+    const now = Date.now();
+    Object.entries(countdownMap).forEach(([id,end])=>{
+      const el = document.getElementById(`cd-${id}`);
+      const btn = document.getElementById(`btn-${id}`);
+      if(!el || !btn) return;
+
+      const sisa = end - now;
+      if(sisa <= 0){
+        el.innerText = "⛔ Waktu pembatalan habis";
+        btn.disabled = true;
+        delete countdownMap[id];
+        return;
+      }
+      const m = Math.floor(sisa/60000);
+      const s = Math.floor((sisa%60000)/1000);
+      el.innerText = `⏳ Sisa waktu batal: ${m}:${s.toString().padStart(2,"0")}`;
+    });
+
+    if(!Object.keys(countdownMap).length){
+      clearInterval(countdownTimer);
+      countdownTimer = null;
+    }
+  },1000);
+}
+
+  async function batalkanPesanan(id,endTime){
+    if(Date.now() > endTime){
+      showToast("Waktu pembatalan habis ❌");
+      return;
+    }
+  
+    cancelPesananId = id;
+    openCancelPopup();
+  }
+  /*popup control*/
+  const cancelOverlay = document.getElementById("cancelOverlay");
+  const cancelBox = document.getElementById("cancelBox");
+  
+  function openCancelPopup(){
+    cancelOverlay.style.display="block";
+    cancelBox.style.display="block";
+  }
+  
+  function closeCancelPopup(){
+    cancelOverlay.style.display="none";
+    cancelBox.style.display="none";
+  }
+  
+  cancelOverlay.addEventListener("click", closeCancelPopup);
+  /*KONFIRMASI BATAL*/
+  async function confirmCancelPesanan(){
+    if(!cancelPesananId) return;
+  
+    try{
+      await db.collection("pesananFamiliHelper").doc(cancelPesananId).update({
+        status:"dibatalkan",
+        dibatalkanAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+  
+      showToast("Pesanan berhasil dibatalkan ❌");
+      closeCancelPopup();
+      setTimeout(()=>location.reload(),1000);
+  
+    }catch(e){
+      console.error(e);
+      showToast("Gagal membatalkan pesanan!");
+    }
+  }
+  /*TOAST BATAL*/
+  function showToast(msg,duration=2000){
+    const t=document.createElement("div");
+    t.className="toast";
+    t.innerText=msg;
+    document.body.appendChild(t);
+    setTimeout(()=>t.classList.add("show"),100);
+    setTimeout(()=>{
+      t.classList.remove("show");
+      setTimeout(()=>t.remove(),300);
+    },duration);
+  }
+  /*NAV AKTIF*/
+  const page = location.pathname.split("/").pop();
+  document.querySelectorAll(".nav-item").forEach(nav=>{
+    nav.classList.remove("active");
+  });
+  
+  if(page=="index.html") document.querySelectorAll(".nav-item")[0].classList.add("active");
+  if(page=="helper.html") document.querySelectorAll(".nav-item")[1].classList.add("active");
+  if(page=="pesanan.html") document.querySelectorAll(".nav-item")[2].classList.add("active");
+</script>
+
+</body>
+</html>

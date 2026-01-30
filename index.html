@@ -295,20 +295,77 @@ body.theme-future .header{
     margin-bottom:6px;
     color:var(--primary);
   }
+  /* ===== FAMILI HELPER BUTTON ===== */
+  .famili-helper-btn{
+    margin-top:14px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:14px;
+    border-radius:18px;
+    background: linear-gradient(135deg, var(--primary), #ff9913);
+    color:#fff;
+    font-weight:700;
+    cursor:pointer;
+    box-shadow:0 12px 28px rgba(0,0,0,.25), var(--glow);
+    transition:.2s;
+  }
+  
+  .famili-helper-btn:hover{
+    transform:translateY(-2px);
+    filter:brightness(1.05);
+  }
+  
+  .famili-helper-btn:active{
+    transform:scale(.98);
+  }
+  
+   .fh-icon{
+    width:52px;
+    height:52px;
+    border-radius:16px;
+    background:rgba(255,255,255,.18);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+  }
+  
+  .fh-icon img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    border-radius:12px;
+  }
+  
+  .fh-text b{
+    display:block;
+    font-size:25px;
+  }
+  
+  .fh-text span{
+    font-size:13px;
+    opacity:.9;
+  }
     /* ===============================
      STOCK FOTO SLIDER
   =============================== */
-  .stock-slider-card{
+  .stock-slider-card {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 20px;
-    margin: 24px 16px 0;
+    margin: 24px auto 0; /* <-- auto kiri & kanan = tengah */
     padding: 12px;
     max-width: 720px;
     width: calc(100% - 32px);
     box-shadow: 0 12px 28px rgba(0,0,0,.08), var(--glow);
     backdrop-filter: blur(var(--blur));
-  }
+
+    display: flex;           /* supaya isi bisa diatur */
+    flex-direction: column;  /* stack vertical */
+    align-items: center;     /* <-- isi card di tengah horizontal */
+    text-align: center;      /* <-- teks juga rata tengah */
+}
   
   .stock-slider{
     display: flex;
@@ -329,12 +386,12 @@ body.theme-future .header{
     position: relative;
   }
   
-  .stock-slide img{
-    width:100%;
-    height:100%;
-    object-fit: cover;
+  .stock-slider-card img {
+    max-width: 100%;
     border-radius: 14px;
-  }
+    display: block;
+    margin: 0 auto; /* pastikan gambar juga di tengah */
+}
   
   /* DOT */
   .slider-dots{
@@ -993,6 +1050,16 @@ body.theme-future .header{
         <button id="batalOrderBtn" style="display:none;">Batal Order</button>
       </div>
     </div>
+        <!-- ===== TOMBOL FAMILI HELPER ===== -->
+    <div class="famili-helper-btn" onclick="location.href='familihelper.html'">
+      <div class="fh-icon">
+        <img src="helper.png" alt="Famili Helper">
+      </div>
+      <div class="fh-text">
+        <b>Famili Helper (New)</b>
+        <span>Titip belanja • Makanan • Antar barang</span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1019,7 +1086,7 @@ body.theme-future .header{
     </div>
     <div class="install-popup-body">
       <div class="install-title">Install aplikasi biar praktis</div>
-      <div class="install-sub">(<4 MB)</div>
+      <div class="install-sub">(cuma 2 MB doang kok, best...)</div>
     </div>
     <div class="install-popup-right">
       <button class="install-btn" id="installBtn">Install</button>
@@ -1652,7 +1719,7 @@ body.theme-future .header{
     if(installed || openedInApp) return;
   
     const last = localStorage.getItem(INSTALL_KEY);
-    if(last && (Date.now() - Number(last) < 300000)) return; // 1 jam
+    if(last && (Date.now() - Number(last) < 0)) return; // 1 jam
   
     installPopupOverlay.style.display = "block";
     localStorage.setItem(INSTALL_KEY, Date.now());
@@ -1660,7 +1727,7 @@ body.theme-future .header{
     // 🚀 Auto hide after 3 seconds
     setTimeout(() => {
       installPopupOverlay.style.display = "none";
-    }, 5000);
+    }, 10000);
   }
   
   // 5. Install button

@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#14b8a6">
+<link rel="icon" href="ikon-512.png">
+<title>Famili Helper</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ===============================
+   GLOBAL RESET
+=============================== */
+*{
+  box-sizing:border-box;
+  font-family:'Nunito',sans-serif;
+  user-select:none;
+  -webkit-user-select:none;
+  outline:none;
+}
+
+body{
+  margin:0;
+  min-height:100vh;
+  background:var(--bg);
+  color:var(--text);
+  transition:background .3s ease,color .3s ease;
+  -webkit-tap-highlight-color:transparent;
+  overflow:hidden;
+}
+
+/* ===============================
+   ROOT THEME (BASE)
+=============================== */
+:root{
+  --primary:#14b8a6;         /* Biru kehijauan */
+  --primary-soft:rgba(20,184,166,.15);
+  --bg:#e0fdfa;              /* Latar belakang halaman */
+  --card:#ffffff;
+  --text:#0f172a;
+  --muted:#64748b;
+  --danger:#ef4444;
+  --border:#d1fae5;
+  --radius:18px;
+  --blur:10px;
+  --glow:none;
+}
+
+body.theme-dark{
+  --bg:#0a1f1b;
+  --card:#0f172a;
+  --text:#e5e7eb;
+  --muted:#94a3b8;
+  --primary:#2dd4bf;
+  --primary-soft:#134e4a;
+  --border:#134e4a;
+}
+
+body.theme-future{
+  --bg:radial-gradient(circle at top,#0a1f1b,#020617);
+  --card:rgba(15,23,42,.65);
+  --text:#e0f2fe;
+  --muted:#7dd3fc;
+  --primary:#2dd4bf;
+  --primary-soft:rgba(45,212,191,.15);
+  --danger:#fb7185;
+  --border:rgba(45,212,191,.35);
+  --glow:
+    0 0 12px rgba(45,212,191,.35),
+    0 0 26px rgba(45,212,191,.2);
+}
+
+/* ===============================
+   SPLASH SCREEN
+=============================== */
+.splash{
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:100;
+  background:var(--bg);
+}
+
+body.theme-dark .splash{background:#020617}
+
+body.theme-future .splash{
+  background:
+    radial-gradient(circle at top,rgba(34,211,238,.35),transparent 60%),
+    linear-gradient(180deg,#020617,#020617);
+}
+
+.splash img{
+  width:180px;
+  height:180px;
+  border-radius:50%;
+  object-fit:cover;
+  animation:logoPop 1.2s ease forwards;
+}
+.splash-logo{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
+}
+
+.splash h1{
+  font-size:22px;
+  font-weight:900;
+  letter-spacing:2px;
+  color:var(--text);
+  text-transform:uppercase;
+  opacity:0;
+  animation:fadeText 1.2s ease forwards;
+  animation-delay:.1s;
+}
+
+@keyframes fadeText{
+  from{opacity:0; transform:translateY(10px)}
+  to{opacity:1; transform:translateY(0)}
+}
+body.theme-future .splash h1{
+  text-shadow:
+    0 0 10px rgba(45,212,191,0.8),
+    0 0 25px rgba(45,212,191,0.6),
+    0 0 50px rgba(45,212,191,0.4);
+}
+
+/* ===============================
+   ONBOARDING
+=============================== */
+.onboarding{
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:90;
+  background:var(--bg);
+}
+.onboarding.hidden{display:none}
+
+/* ===============================
+   POPUP
+=============================== */
+.popup{
+  width:90%;
+  max-width:420px;
+  background:var(--card);
+  border-radius:var(--radius);
+  padding:28px;
+  border:1px solid var(--border);
+  box-shadow:0 25px 60px rgba(0,0,0,.25),var(--glow);
+  animation:popupIn .45s ease forwards;
+  backdrop-filter: blur(var(--blur));
+}
+.popup.hidden{display:none}
+.popup.exit{animation:popupOut .35s ease forwards}
+
+.popup-header{text-align:center;margin-bottom:18px}
+.popup-header img{
+  width:190px;height:190px;object-fit:cover;
+}
+.popup p{text-align:center;line-height:1.7;color:var(--muted)}
+
+.popup-action{
+  display:flex;
+  justify-content:flex-end;
+  margin-top:26px;
+}
+
+.btn-arrow{
+  width:52px;height:52px;border-radius:50%;
+  background:var(--primary);
+  display:flex;align-items:center;justify-content:center;
+}
+.btn-arrow svg{width:24px;height:24px;fill:#fff}
+
+.btn-start{
+  margin-top:26px;
+  padding:15px;
+  background:var(--primary);
+  color:#fff;
+  text-align:center;
+  font-weight:700;
+  border-radius:14px;
+}
+
+/* ===============================
+   ANIMATION
+=============================== */
+@keyframes logoPop{
+  0%{transform:scale(.85);opacity:0}
+  60%{transform:scale(1.05);opacity:1}
+  100%{transform:scale(1)}
+}
+@keyframes popupIn{
+  from{opacity:0;transform:translateX(40px)}
+  to{opacity:1;transform:translateX(0)}
+}
+@keyframes popupOut{
+  from{opacity:1;transform:translateX(0)}
+  to{opacity:0;transform:translateX(-40px)}
+}
+</style>
+</head>
+
+<body>
+
+<!-- ===============================
+     THEME SYNC
+=============================== -->
+<script>
+const THEME_KEY = "app-theme";
+const savedTheme = localStorage.getItem(THEME_KEY);
+document.body.classList.add(savedTheme ? `theme-${savedTheme}` : "theme-light");
+</script>
+
+<!-- ===============================
+     SPLASH
+=============================== -->
+<div class="splash" id="splash">
+  <div class="splash-logo">
+    <img src="helper.png">
+    <h1>FAMILI HELPER</h1>
+  </div>
+</div>
+
+<!-- ===============================
+     ONBOARDING
+=============================== -->
+<div class="onboarding hidden" id="onboarding">
+
+  <div class="popup" id="popup1">
+    <div class="popup-header">
+      <img src="helper.png">
+    </div>
+    <p><strong>Apa itu Famili Helper?</strong></p>
+    <p>Famili Helper itu jasa bantu-bantu. Ibu bisa titip belanja, titip beli makanan, atau kirim barang ke orang lain.</p>
+    <div class="popup-action">
+      <div class="btn-arrow" onclick="nextPopup(2)">
+        <svg viewBox="0 0 24 24"><path d="M8 5l8 7-8 7z"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="popup hidden" id="popup2">
+    <p>Tinggal klik di aplikasi, nanti orang kami yang datang bantu ke rumah Ibu. Jadi tidak perlu repot keluar.</p>
+    <div class="popup-action">
+      <div class="btn-arrow" onclick="nextPopup(3)">
+        <svg viewBox="0 0 24 24"><path d="M8 5l8 7-8 7z"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="popup hidden" id="popup3">
+    <p>Masukkan <strong>nomor WhatsApp</strong> sama <strong>alamat</strong> dulu ya Bu, biar kami gampang hubungi kalau ada pesanan atau kabar.</p>
+    <div class="btn-start" onclick="goToRegister()">Mulai</div>
+  </div>
+
+</div>
+
+<!-- ===============================
+     FIREBASE
+=============================== -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyCl13_a4x-BQnWNUjf9JOQX1DKc-HxLBys",
+  authDomain:"klien-39696.firebaseapp.com",
+  projectId:"klien-39696"
+});
+
+const auth = firebase.auth();
+const db   = firebase.firestore();
+// ================= AUTO CHECK FIELD watshapp =================
+auth.onAuthStateChanged(async(user)=>{
+  if(!user){
+    console.log("Belum login");
+    showOnboarding();
+    return;
+  }
+
+  let data=null;
+
+  // cek agens
+  let doc=await db.collection("agens").doc(user.uid).get();
+  if(doc.exists) data=doc.data();
+
+  // cek members
+  if(!data){
+    doc=await db.collection("members").doc(user.uid).get();
+    if(doc.exists) data=doc.data();
+  }
+
+  if(!data){
+    console.log("User document tidak ditemukan");
+    showOnboarding();
+    return;
+  }
+
+  console.log("DATA USER:",data);
+
+  // ✅ CEK NAMA FIELD (BUKAN VALUE)
+  if("whatsapp" in data){
+    console.log("FIELD whatsapp ADA → redirect helper.html");
+    window.location.replace("helper.html");
+  }else{
+    console.log("FIELD watshapp BELUM ADA → onboarding");
+    showOnboarding();
+  }
+});
+
+</script>
+
+<!-- ===============================
+     LOGIC
+=============================== -->
+<script>
+setTimeout(()=>{
+  splash.style.display="none";
+  onboarding.classList.remove("hidden");
+},2500);
+
+let currentPopup=1;
+function nextPopup(n){
+  document.getElementById("popup"+currentPopup).classList.add("hidden");
+  document.getElementById("popup"+n).classList.remove("hidden");
+  currentPopup=n;
+}
+
+function goToRegister(){
+  window.location.href = "register-helper.html";
+}
+</script>
+
+</body>
+</html>
