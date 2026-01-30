@@ -436,6 +436,36 @@ textarea{resize:none}
 .btn-confirm:active{
   transform:scale(.97);
 }
+/*POPUP TUTUP*/
+#closedOverlay {
+  position: fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 99998;
+  display:none;
+}
+
+#closedPopup {
+  position: fixed;
+  top:50%; left:50%;
+  transform: translate(-50%,-50%);
+  background: var(--muted);
+  padding: 24px;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 12px 36px rgba(0,0,0,0.3);
+  z-index: 99999;
+  width: 280px;
+  display:none;
+  animation: fadeUp .3s ease;
+}
+
+#closedBtn:hover{
+  opacity:0.9;
+  transform:scale(1.02);
+  transition:.2s ease;
+}
 </style>
 </head>
 
@@ -523,6 +553,13 @@ textarea{resize:none}
     <button onclick="closeConfirm()" class="btn-cancel">Batal</button>
     <button onclick="confirmSendPesanan()" class="btn-confirm">Kirim</button>
   </div>
+</div>
+<!-- POPUP JAM TUTUP -->
+<div id="closedOverlay"></div>
+<div id="closedPopup">
+  <img src="helper.png" alt="Helper" style="width:120px; display:block; margin:0 auto 16px;">
+  <h3 style="text-align:center; color:#0f172a;">Maaf kami sudah tutup, buka lagi jam 9 pagi.</h3>
+  <button id="closedBtn" style="margin-top:16px; padding:10px 16px; border:none; border-radius:12px; background:var(--primary); color:#fff; font-weight:700; cursor:pointer;">Oke</button>
 </div>
 <script>
 /* THEME SYNC */
@@ -728,6 +765,49 @@ function confirmSendPesanan(){
   closeConfirm();
   submitPesanan(); // <-- FUNGSI ASLI KAMU DIPANGGIL
 }
+const overlay = document.getElementById("closedOverlay");
+const popup = document.getElementById("closedPopup");
+const btn = document.getElementById("closedBtn");
+
+let popupTimeout = null;
+
+function showClosedPopup() {
+  const now = new Date();
+  const hours = now.getHours();
+
+  // Jam tutup: 18:00 - 09:00
+  const isClosed = hours >= 18 || hours < 9;
+
+  if(!isClosed){
+    // Jika jam sudah 09:00 - popup hilang
+    overlay.style.display = "none";
+    popup.style.display = "none";
+    if(popupTimeout) clearTimeout(popupTimeout);
+    return;
+  }
+
+  overlay.style.display = "block";
+  popup.style.display = "block";
+
+  // Set timer untuk munculkan lagi setiap 3 detik setelah ditutup
+  if(popupTimeout) clearTimeout(popupTimeout);
+  popupTimeout = setTimeout(showClosedPopup, 1000);
+}
+
+// Tombol Oke
+// Tombol Oke
+btn.addEventListener("click", ()=>{
+  overlay.style.display = "none";
+  popup.style.display = "none";
+  location.reload(); // <-- Tambahkan ini untuk refresh halaman
+  // Setelah 3 detik muncul lagi otomatis
+  if(popupTimeout) clearTimeout(popupTimeout);
+  popupTimeout = setTimeout(showClosedPopup, 3000);
+});
+
+// Jalankan saat load & setiap 1 menit cek jam
+showClosedPopup();
+setInterval(showClosedPopup, 60000);
 </script>
 
 </body>
