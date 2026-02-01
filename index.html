@@ -1180,7 +1180,17 @@ body.theme-future .header{
     <span>Profil</span>
   </a>
 </nav>
-
+<!-- POPUP NOTIF -->
+<div id="notifPopup" class="notif" style="display:none;">
+  <div class="notif-content">
+    <h3>Izinkan Notifikasi</h3>
+    <p>Kami tahu Anda sering lupa pesan galon, izinkan notifikasi.</p>
+    <div class="actions">
+      <button id="allowNotifBtn" class="btn-primary">Oke</button>
+      <button id="denyNotifBtn" class="btn-secondary">Nanti</button>
+    </div>
+  </div>
+</div>
 <script>
   // ===== THEME SYNC DARI PROFIL =====
   const THEME_KEY = "app-theme";
@@ -1204,7 +1214,95 @@ body.theme-future .header{
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db = firebase.firestore();
+  
+  const notifPopup = document.getElementById("notifPopup");
+  const allowNotifBtn = document.getElementById("allowNotifBtn");
+  const denyNotifBtn = document.getElementById("denyNotifBtn");
+  
+  // ===== Show / Hide =====
+  function showNotifPopup(){ notifPopup.style.display = "flex"; }
+  function closeNotifPopup(){ notifPopup.style.display = "none"; }
+  
+  // ===== Tampilkan popup sekali per hari =====
+  window.addEventListener("load", () => {
+    const denied = localStorage.getItem("notifDenied") === "true";
+    const shownToday = localStorage.getItem("notifShown") === new Date().toDateString();
+  
+    if(!denied && !shownToday && Notification.permission === "default"){
+      setTimeout(() => {
+        showNotifPopup();
+        localStorage.setItem("notifShown", new Date().toDateString());
+      }, 9000); // delay 3 detik
+    }
+  });
+  
+  // ===== Tombol Nanti / Tolak =====
+  denyNotifBtn?.addEventListener("click", () => {
+    closeNotifPopup();
+    localStorage.setItem("notifDenied", "true");
+  });
+  
+  allowNotifBtn?.addEventListener("click", async () => {
+    closeNotifPopup();
+  
+    // ===== Request permission browser =====
+    if(Notification.permission !== "granted"){
+      try {
+        const permission = await Notification.requestPermission();
+        if(permission !== "granted"){
+          console.warn("User menolak notifikasi");
+          return;
+        }
+      } catch(err){
+        console.error("Gagal request permission:", err);
+        return;
+      }
+    }
+  
+    // ===== Register Service Worker & Ambil Token =====
+    if(!firebase.messaging) return;
+  
+    try {
+      await registerSW(); // pastikan function ini ada
+      const token = await firebase.messaging().getToken({
+        vapidKey: "BIGABqP1dfREWvaf-a0yI5KvxSsxYSMtjyFIqq8HpTxA7gk6WqIxW4Ypiu0NEfucoxNJZotR0ZxYt-wgWMpIJF4"
+      });
+  
+      if(token){
+        console.log("Token FCM:", token);
+        // simpan di localStorage dulu
+        localStorage.setItem("fcmPendingToken", token);
+  
+        // simpan ke Firestore sesuai auth
+        savePendingToken(firebase.auth().currentUser.uid);
+      }
+    } catch(err){
+      console.error("Notif gagal:", err);
+    }
+  });
 
+  async function savePendingToken(uid){
+    if(!uid) return;
+  
+    const token = localStorage.getItem("fcmPendingToken");
+    if(!token) return;
+  
+    try {
+      // cek apakah user agen atau member
+      let role = "members";
+      let doc = await firebase.firestore().collection("agens").doc(uid).get();
+      if(doc.exists) role = "agens";
+  
+      await firebase.firestore().collection(role).doc(uid).update({
+        fcmToken: token
+      });
+  
+      localStorage.removeItem("fcmPendingToken");
+      console.log("Token berhasil disimpan ke Firestore!");
+    } catch(err){
+      console.error("Gagal simpan token:", err);
+    }
+  }
   const namaLengkapSpan = document.getElementById('namaLengkap');
   const pointSpan = document.getElementById('point');
   const avatarImg = document.getElementById('avatar');
@@ -1727,7 +1825,7 @@ body.theme-future .header{
     // 🚀 Auto hide after 3 seconds
     setTimeout(() => {
       installPopupOverlay.style.display = "none";
-    }, 10000);
+    }, 5000);
   }
   
   // 5. Install button
