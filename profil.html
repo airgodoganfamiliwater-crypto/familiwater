@@ -1214,6 +1214,22 @@ function loadNavbarAvatar(){
 
 loadNavbarAvatar();
 
+  // Ambil tombol
+  const chatBtn = document.getElementById("chatAdminBtn");
+  
+  // Nomor WhatsApp admin (ganti dengan nomor kamu)
+  const waNumber = "6281223836601"; // pakai format internasional +62
+  
+  // Teks template (URL encode supaya spasi & simbol aman)
+  const waText = encodeURIComponent("Halo FAMILI WATER");
+  
+  // Event klik
+  chatBtn.addEventListener("click", () => {
+    // Buka WhatsApp Web / App
+    const waLink = `https://wa.me/${waNumber}?text=${waText}`;
+    window.open(waLink, "_blank"); // buka di tab baru
+  });
+
   const installBtn = document.getElementById("installBtn");
   const installOverlay = document.getElementById("installOverlay");
   const installPopupBtn = document.getElementById("installPopupBtn");

@@ -329,8 +329,22 @@ body.theme-future .header{
     align-items:center;
     justify-content:center;
     overflow:hidden;
+    
+    /* Animasi detak jantung */
+    animation: heartbeat 1.2s infinite;
+    animation-timing-function: ease-in-out;
   }
-  
+  @keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    25% { transform: scale(1.15); }
+    50% { transform: scale(1); }
+    75% { transform: scale(1.15); }
+  }
+    /* Hover tambah sedikit efek */
+  .famili-helper-btn:hover .fh-icon {
+    animation-duration:0.8s; /* lebih cepat saat hover */
+    box-shadow: 0 0 12px rgba(255,255,255,0.6);
+  }
   .fh-icon img{
     width:100%;
     height:100%;
@@ -495,20 +509,21 @@ body.theme-future .header{
     margin-top:10px;
   }
 
-  #batalOrderBtn {
-    display:none;
-    margin-top:10px;
-    padding:10px;
-    border:none;
-    border-radius:12px;
-    background:#f97316;
-    color:#fff;
-    font-weight:700;
-    cursor:pointer;
+  /* Tombol Info Lengkap Point */
+  #infoGiftBtn {
+    margin-top: 50px; /* jarak dari gift-container */
+    padding: 12px 0;   /* tinggi tombol lebih nyaman */
+    border: none;
+    border-radius: 12px;
+    background: #ffa019;
+    color: var(--text);
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
     transition: transform .2s ease, filter .2s ease;
   }
-
-  #batalOrderBtn:hover{
+  
+  #infoGiftBtn:hover {
     transform: translateY(-2px);
     filter: brightness(1.05);
   }
@@ -671,6 +686,129 @@ body.theme-future .header{
   .confirm-buttons .btn {
     width: 50%;
   }
+/* ================= INFO SLIDE MODAL ================= */
+.info-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.45);
+  backdrop-filter:blur(12px);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+}
+
+.info-overlay.show{
+  display:flex;
+  animation:fadeIn .25s ease;
+}
+
+@keyframes fadeIn{
+  from{opacity:0}
+  to{opacity:1}
+}
+
+.info-card{
+  width:90%;
+  max-width:400px;
+  aspect-ratio:4/5; /* rasio potret */
+  background:var(--card);
+  border-radius:22px;
+  box-shadow:0 25px 60px rgba(0,0,0,.25), var(--glow);
+  padding:22px;
+  position:relative;
+  overflow:hidden;
+  animation:popGame .35s cubic-bezier(.2,1.5,.4,1);
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+}
+
+@keyframes popGame{
+  0%{transform:scale(.7) rotateX(20deg);opacity:0}
+  100%{transform:scale(1);opacity:1}
+}
+
+/* Slide Container */
+.slide-wrap{
+  display:flex;
+  transition:transform .45s ease;
+  width:100%;
+  flex:1;
+}
+
+.slide{
+  min-width:100%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  transform:scale(.96);
+  transition:transform .4s ease;
+}
+
+.info-overlay.show .slide{
+  transform:scale(1);
+}
+
+.slide-inner{
+  background:var(--primary-soft);
+  padding: 16px;
+  border-radius:16px;
+  width:100%;
+  height:100%;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,.05);
+  display:flex;
+  flex-direction:column;
+ 
+  text-align:center;
+  margin: 5px;
+}
+
+.slide-inner h3 {
+  margin: 0 0 6px; /* margin bawah lebih kecil */
+  font-size: 20px;
+  text-align: center;
+}
+
+.slide-inner p {
+  margin: 0; /* hilangkan margin default */
+  font-size: 18px;
+  color: var(--muted);
+  text-align: left;
+  line-height: 1.5; /* biar teks tidak terlalu rapat */
+}
+
+/* NAVIGATION */
+.slide-nav{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-top:10px;
+}
+
+.slide-btn{
+  background:var(--primary);
+  border:none;
+  color:white;
+  padding:10px;
+  border-radius:50%;
+  width:44px;
+  height:44px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  box-shadow:var(--glow);
+}
+
+.slide-btn.disabled{
+  opacity:.3;
+  pointer-events:none;
+}
+
+.close-mid{
+  background:#ef4444;
+}
   /* ===============================
      INSTALL POPUP (slide from top)
   =============================== */
@@ -1001,7 +1139,15 @@ body.theme-future .header{
       width: calc(25% - 14px);
     }
   }
-
+  .footer{
+    text-align:center;
+    padding:12px 0;
+    font-size:13px;
+    color:var(--muted);
+    background:var(--card); /* atau bisa transparent sesuai tema */
+    border-top:1px solid var(--border);
+    margin-top:20px;
+  }
 </style>
 </head>
 <body>
@@ -1077,6 +1223,71 @@ body.theme-future .header{
 <div class="gift-card" id="giftCard">
   <div class="gift-title">Daftar Gift</div>
   <div class="gift-container" id="giftContainer"></div>
+  <button id="infoGiftBtn" class="info-btn">Info Lengkap Point</button>
+</div>
+<!-- popup info lengkap -->
+<div class="info-overlay" id="infoOverlay">
+  <div class="info-card">
+
+    <div class="slide-wrap" id="slideWrap">
+
+      <div class="slide">
+        <div class="slide-inner">
+          <h3>1. Fitur & Aplikasi</h3>
+          <p>
+            1. <strong>Tukar gift</strong> dan lihat jumlah point.<br>
+            2. Cek <strong>riwayat ambil galon</strong> selama se-bulan.<br>
+            3. Dapat <strong>pengingat galon habis lewat email otomatis</strong>.<br>
+            4. Bisa <strong>ganti foto profil & tema aplikasi</strong>.<br>
+            5. Lihat promo, edukasi, dan gunakan <strong>Famili Helper</strong> untuk titip belanja atau antar barang.
+          </p>
+        </div>
+      </div>
+      
+      <div class="slide">
+        <div class="slide-inner">
+          <h3>2. Cara Mendapatkan Point</h3>
+          <p>
+            1. Setiap beli galon, kamu dapat <strong>point</strong>.<br>
+            2. Satu galon biasanya <strong>10 point</strong>, bisa lebih kalau ada program khusus.<br>
+            3. Data pembelian dicatat oleh <strong>sales atau agen</strong>.<br>
+            4. Point akan <strong>otomatis bertambah</strong> setelah divalidasi di aplikasi.
+          </p>
+        </div>
+      </div>
+      
+      <div class="slide">
+        <div class="slide-inner">
+          <h3>3. Tukar Point Jadi Gift</h3>
+          <p>
+            1. Kalau point cukup, bisa <strong>ditukar dengan gift</strong> langsung di aplikasi.<br>
+            2. Gift akan dikirim lewat <strong>sales atau agen</strong>.<br>
+            3. Penukaran <strong>tidak bisa dibatalkan</strong> setelah 10 menit.<br>
+            4. Daftar gift bisa berubah, tapi info <strong>stok & point</strong> selalu terlihat.
+          </p>
+        </div>
+      </div>
+      
+      <div class="slide">
+        <div class="slide-inner">
+          <h3>4. Peraturan Point & Gift</h3>
+          <p>
+            1. <strong>Point hanya untuk tukar gift</strong>.<br>
+            2. <strong>Point tidak pernah hangus</strong>, bisa dikumpulkan kapan saja.
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- NAV -->
+    <div class="slide-nav">
+      <button id="prevSlide" class="slide-btn disabled">⬅</button>
+      <button id="closeSlide" class="slide-btn close-mid">✖</button>
+      <button id="nextSlide" class="slide-btn">➡</button>
+    </div>
+
+  </div>
 </div>
 <!-- POPUP INSTALL PWA -->
 <div class="install-popup-overlay" id="installPopupOverlay">
@@ -1190,6 +1401,9 @@ body.theme-future .header{
       <button id="denyNotifBtn" class="btn-secondary">Nanti</button>
     </div>
   </div>
+</div>
+<div class="footer">
+   FAMILI WATER 2026 ©
 </div>
 <script>
   // ===== THEME SYNC DARI PROFIL =====
@@ -1848,6 +2062,64 @@ body.theme-future .header{
   // 6. Show popup after page load
   window.addEventListener("load", () => {
     setTimeout(showInstallPopup, 800);
+  });
+  //show popup info lengkap
+  const overlay = document.getElementById("infoOverlay");
+  const slideWrap = document.getElementById("slideWrap");
+  const slides = document.querySelectorAll(".slide");
+  const btnPrev = document.getElementById("prevSlide");
+  const btnNext = document.getElementById("nextSlide");
+  const btnClose = document.getElementById("closeSlide");
+  const btnInfo = document.getElementById("infoGiftBtn");
+  
+  let index = 0;
+  
+  // OPEN POPUP
+  btnInfo.onclick = ()=> overlay.classList.add("show");
+  
+  // CLOSE
+  btnClose.onclick = ()=> overlay.classList.remove("show");
+  
+  // UPDATE SLIDE
+  function updateSlide(){
+    slideWrap.style.transform = `translateX(-${index*100}%)`;
+    btnPrev.classList.toggle("disabled", index===0);
+    btnNext.textContent = index===slides.length-1 ? "Selesai" : "➡";
+  }
+  
+  // NEXT
+  btnNext.onclick = ()=>{
+    if(index < slides.length-1){
+      index++;
+      updateSlide();
+    } else {
+      overlay.classList.remove("show");
+      index=0;
+      updateSlide();
+    }
+  };
+  
+  // PREV
+  btnPrev.onclick = ()=>{
+    if(index>0){
+      index--;
+      updateSlide();
+    }
+  };
+  
+  // SWIPE SUPPORT (Mobile)
+  let startX=0;
+  overlay.addEventListener("touchstart", e=>{
+    startX = e.touches[0].clientX;
+  });
+  overlay.addEventListener("touchend", e=>{
+    let endX = e.changedTouches[0].clientX;
+    if(startX - endX > 50 && index < slides.length-1){
+      index++; updateSlide();
+    }
+    if(endX - startX > 50 && index > 0){
+      index--; updateSlide();
+    }
   });
 
   /* NAVBAR ACTIV */
