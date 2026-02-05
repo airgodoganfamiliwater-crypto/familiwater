@@ -18,6 +18,42 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
 
 <style>
+  .bg-falling{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    overflow:hidden;
+    z-index:3;
+  }
+  
+  .bg-falling img{
+    position:absolute;
+    top:-120px;
+    object-fit:cover;
+    animation-name: fall;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    will-change: transform, opacity;
+    transform: translateZ(0);
+  }
+  
+  /* glow khusus FUTURE */
+  body.theme-future .bg-falling img{
+  filter:
+    drop-shadow(0 0 8px rgba(34,211,238,.35));
+ }
+  @keyframes fall{
+    from{
+      transform: translate3d(0,-120px,0) rotate(0deg);
+      opacity:0;
+    }
+    to{
+      transform:
+        translate3d(var(--drift),120vh,0)
+        rotate(var(--rotate));
+      opacity:.2;
+    }
+  }
   /* ===============================
      GLOBAL RESET
   =============================== */
@@ -273,40 +309,106 @@
     border-color: var(--danger);
     color: var(--danger);
   }
+    .popup{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.4);
+    backdrop-filter:blur(6px);
+    z-index:999;
+  }
+  .popup-content{
+    background:var(--card);
+    width:90%;
+    max-width:360px;
+    margin:120px auto;
+    padding:18px;
+    border-radius:16px;
+    border:1px solid var(--border);
+    box-shadow:0 10px 30px rgba(0,0,0,.2);
+  }
+  .actions{
+    display:flex;
+    gap:10px;
+    margin-top:10px;
+  }
+  .btn-primary{
+    background:var(--primary);
+    color:white;
+    padding:10px;
+    border-radius:10px;
+    border:none;
+  }
+  .btn-secondary{
+    background:#e5e7eb;
+    padding:10px;
+    border-radius:10px;
+    border:none;
+  }
+  .toast.success{
+    border-color:#22c55e;
+    color:#22c55e;
+  }
 </style>
 </head>
 <body>
-<div class="page">
-  <div class="container">
-    <div class="logo-wrapper">
-    <img src="logofw.png" alt="Logo FW" class="logo-fw">
-    </div>
-    <h2>Login Member</h2>
-    <form id="loginForm">
-      <input type="email" id="email" placeholder="Email" required />
-      <input type="password" id="password" placeholder="Password" required />
-      <div class="error" id="errorMsg"></div>
-      <button type="submit" id="loginBtn">
-        <span class="btn-text">Login</span>
-        <span class="btn-loader"></span>
-      </button>
-      <div class="register-link">
-      Belum punya akun? <a href="register.html">Daftar</a>
+  <div class="bg-falling"></div>
+  <div class="page">
+    <div class="container">
+      <div class="logo-wrapper">
+        <img src="logofw.png" alt="Logo FW" class="logo-fw">
       </div>
-    </form>
+      <h2>Login Member</h2>
+      <form id="loginForm">
+        <input type="email" id="email" placeholder="Email" required />
+        <input type="password" id="password" placeholder="Password" required />
+        <div class="error" id="errorMsg"></div>
+        <button type="submit" id="loginBtn">
+          <span class="btn-text">Login</span>
+          <span class="btn-loader"></span>
+        </button>
+        <div class="register-link">
+          <!-- RESET PASSWORD
+          <a href="#" onclick="openResetPopup()">Lupa Password?</a><br> -->
+          
+          Belum punya akun? <a href="register.html">Daftar</a>
+        </div>
+      </form>
+    </div>
   </div>
-</div>
-<div id="toast" class="toast"></div>
+  
+  <div id="toast" class="toast"></div>
+  
+  <!-- RESET PASSWORD POPUP -->
+  <div id="resetPopup" class="popup">
+    <div class="popup-content">
+      <h3>Reset Password</h3>
+      <input type="email" id="resetEmail" placeholder="Masukkan email">
+      <div class="actions">
+        <button onclick="closeResetPopup()" class="btn-secondary">Batal</button>
+        <button onclick="sendResetEmail()" class="btn-primary">Kirim Link</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- NOTIF POPUP -->
+  <div id="notifPopup" class="popup">
+    <div class="popup-content">
+      <h3>Izinkan Notifikasi</h3>
+      <p>Agar Anda mendapat update terbaru, izinkan notifikasi.</p>
+      <div class="actions">
+        <button id="allowNotifBtn" class="btn-primary">Ya, Izinkan</button>
+        <button id="denyNotifBtn" class="btn-secondary">Tidak</button>
+      </div>
+    </div>
+  </div>
+
 <script>
   // ===== THEME SYNC DARI PROFIL =====
   const THEME_KEY = "app-theme";
   const savedTheme = localStorage.getItem(THEME_KEY);
-
-  if(savedTheme){
-    document.body.classList.add(`theme-${savedTheme}`);
-  } else {
-    document.body.classList.add("theme-light");
-  }
+  if(savedTheme){ document.body.classList.add(`theme-${savedTheme}`); } 
+  else { document.body.classList.add("theme-light"); }
 
   // ===== Firebase Setup =====
   const firebaseConfig = {
@@ -321,96 +423,93 @@
   const auth = firebase.auth();
   const db = firebase.firestore();
   const messaging = firebase.messaging();
-  const loginForm = document.getElementById('loginForm');
-  const errorMsg = document.getElementById('errorMsg');
 
- // ===== REGISTER SERVICE WORKER =====
+  // ===== REGISTER SERVICE WORKER =====
   async function registerSW() {
     if ('serviceWorker' in navigator) {
-      try {
-        await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-        console.log("SW registered");
-      } catch (err) {
-        console.log("SW gagal:", err);
-      }
+      try { await navigator.serviceWorker.register('/firebase-messaging-sw.js'); console.log("SW registered"); }
+      catch (err) { console.log("SW gagal:", err); }
     }
   }
 
-  // ===== Fungsi untuk minta izin notif & simpan token =====
-  async function requestNotificationPermission(uid, role) {
-    try {
-      await registerSW(); // <<< ini tetap dipakai
+  // ===== POPUP NOTIF LOGIC =====
+  const notifPopup = document.getElementById("notifPopup");
+  const allowBtn = document.getElementById("allowNotifBtn");
+  const denyBtn = document.getElementById("denyNotifBtn");
 
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted") return;
+  function showNotifPopup(){
+    if(Notification.permission === "default") notifPopup.style.display = "block";
+  }
+  function closeNotifPopup(){ notifPopup.style.display = "none"; }
 
+  allowBtn.addEventListener("click", async ()=>{
+    closeNotifPopup();
+    await registerSW();
+    const permission = await Notification.requestPermission();
+    if(permission === "granted"){
       const token = await messaging.getToken({
         vapidKey: "BIGABqP1dfREWvaf-a0yI5KvxSsxYSMtjyFIqq8HpTxA7gk6WqIxW4Ypiu0NEfucoxNJZotR0ZxYt-wgWMpIJF4"
       });
-
-      if (!token) return;
-
-      // simpan token ke document yang sesuai
-      await db.collection(role === "agen" ? "agens" : "members").doc(uid).update({
-        fcmToken: token
-      });
-
-    } catch (err) {
-      console.log("Notif gagal:", err);
+      if(token) localStorage.setItem("fcmPendingToken", token);
     }
-  }
+  });
+
+  denyBtn.addEventListener("click", closeNotifPopup);
+
+  window.addEventListener("load", showNotifPopup);
 
   // ===== LOGIN =====
+  const loginForm = document.getElementById('loginForm');
+  const errorMsg = document.getElementById('errorMsg');
+
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     errorMsg.textContent = "";
-  
     const loginBtn = document.getElementById("loginBtn");
     loginBtn.classList.add("loading");
-  
+
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
-  
+
     try {
-      // ===== Firebase Auth Login =====
       const userCredential = await auth.signInWithEmailAndPassword(email, password);
       const uid = userCredential.user.uid;
 
-      // ===== CEK MEMBERS =====
       let userDoc = await db.collection('members').doc(uid).get();
       let role = "member";
-
-      // ===== JIKA BUKAN MEMBERS, CEK AGENS =====
-      if (!userDoc.exists) {
+      if(!userDoc.exists){
         userDoc = await db.collection('agens').doc(uid).get();
         role = "agen";
       }
-
-      // ===== JIKA TIDAK ADA DI KEDUANYA =====
-      if (!userDoc.exists) {
+      if(!userDoc.exists){
         errorMsg.textContent = "Akun tidak ditemukan!";
         await auth.signOut();
-        return;
-      }
-  
-      // ===== CEK STATUS =====
-      const status = userDoc.data().status;
-      if (status !== "approved") {
-        errorMsg.textContent = "Akun Anda masih pending. Silahkan tunggu approval admin.";
-        await auth.signOut();
+        loginBtn.classList.remove("loading");
         return;
       }
 
-      // ===== SIMPAN ROLE (OPSIONAL TAPI PENTING KE DEPAN) =====
+      const status = userDoc.data().status;
+      if(status !== "approved"){
+        errorMsg.textContent = "Akun Anda masih pending. Silahkan tunggu approval admin.";
+        await auth.signOut();
+        loginBtn.classList.remove("loading");
+        return;
+      }
+
       localStorage.setItem("role", role);
-  
-      // ===== SIMPAN FCM TOKEN =====
-      await requestNotificationPermission(uid, role);
-  
-      // ===== LOGIN SUKSES =====
+
+      // ===== SIMPAN TOKEN PENDING =====
+      const tokenPending = localStorage.getItem("fcmPendingToken");
+      if(tokenPending){
+        await db.collection(role === "agen" ? "agens" : "members").doc(uid).update({
+          fcmToken: tokenPending
+        });
+        localStorage.removeItem("fcmPendingToken");
+      }
+
       window.location.href = "index.html";
-  
-    } catch (err) {
+
+    } catch(err){
       let msg = "Password atau email salah";
       if(err.code === "auth/wrong-password") msg = "Password salah";
       if(err.code === "auth/user-not-found") msg = "Email tidak terdaftar";
@@ -424,11 +523,64 @@
     const toast = document.getElementById("toast");
     toast.innerText = message;
     toast.className = "toast show " + type;
-
-    setTimeout(() => {
-      toast.className = "toast " + type;
-    }, 5000);
+    setTimeout(()=>{ toast.className = "toast " + type; }, 5000);
   }
+
+  // ===== RESET PASSWORD =====
+  const resetPopup = document.getElementById("resetPopup");
+  const resetEmail = document.getElementById("resetEmail");
+
+  function openResetPopup(){ resetPopup.style.display = "block"; }
+  function closeResetPopup(){ resetPopup.style.display = "none"; }
+
+  async function sendResetEmail(){
+    const email = resetEmail.value.trim();
+    if(!email){ showToast("Masukkan email dulu", "error"); return; }
+    try{
+      await auth.sendPasswordResetEmail(email);
+      showToast("Link reset dikirim ke email 📧", "success");
+      closeResetPopup();
+    }catch(err){
+      console.log(err);
+      showToast("Email tidak ditemukan", "error");
+    }
+  }
+  /*LOGO JATUH*/
+    const bg = document.querySelector(".bg-falling");
+    let TOTAL_LOGO = 13; // ✅ pakai let
+    /*JIKA HP KENTANG*/
+    if (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4) {
+      TOTAL_LOGO = 7;
+    }
+
+  for(let i = 0; i < TOTAL_LOGO; i++){
+    const img = document.createElement("img");
+    img.src = "logo.png";
+  
+    const size = Math.random() * 40 + 25;
+    const left = Math.random() * 100;
+    const duration = Math.random() * 12 + 8;
+    const delay = Math.random() * -20;
+    const drift = (Math.random() * 120 - 60) + "px";
+    const rotate = (Math.random() * 720 - 360) + "deg";
+  
+    img.style.width = size + "px";
+    img.style.left = left + "%";
+    img.style.animationDuration = duration + "s";
+    img.style.animationDelay = delay + "s";
+  
+    // 🌌 OPACITY ACAK (LETANYA DI SINI)
+    img.style.opacity = Math.random() * 0.15 + 0.05;
+  
+    img.style.setProperty("--drift", drift);
+    img.style.setProperty("--rotate", rotate);
+  
+    bg.appendChild(img);
+  }
+  /* 🔥 MATIKAN ANIMASI SAAT TAB TIDAK AKTIF */
+  document.addEventListener("visibilitychange", () => {
+  bg.style.display = document.hidden ? "none" : "block";
+  });
 </script>
 </body>
 </html>

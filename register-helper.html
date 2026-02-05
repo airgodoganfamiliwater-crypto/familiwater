@@ -123,6 +123,66 @@ input[readonly]{opacity:.8}
   margin-top:6px;
   text-align:center;
 }
+/* ===== CUSTOM POPUP ===== */
+#customPopup{
+  position:fixed;
+  top:0; left:0; right:0; bottom:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+}
+
+#customPopup .popup-overlay{
+  position:absolute;
+  top:0; left:0; right:0; bottom:0;
+  background:rgba(0,0,0,.45);
+  backdrop-filter:blur(4px);
+}
+
+#customPopup .popup-card{
+  position:relative;
+  background:var(--card);
+  color:var(--text);
+  border-radius:var(--radius);
+  padding:22px;
+  width:90%;
+  max-width:340px;
+  text-align:center;
+  border:1px solid var(--border);
+  box-shadow:0 20px 40px rgba(0,0,0,.25),var(--glow);
+  animation:popupIn .25s ease;
+}
+
+@keyframes popupIn{
+  from{opacity:0;transform:scale(.9)}
+  to{opacity:1;transform:scale(1)}
+}
+
+#customPopup h3{
+  color:var(--primary);
+  margin-bottom:10px;
+}
+
+#customPopup p{
+  font-size:14px;
+  line-height:1.4;
+  margin-bottom:16px;
+}
+
+#customPopup button{
+  width:100%;
+  padding:10px;
+  border:none;
+  border-radius:12px;
+  background:var(--primary);
+  color:#fff;
+  font-weight:700;
+  cursor:pointer;
+}
+#customPopup button:hover{
+  filter:brightness(1.1);
+}
 </style>
 </head>
 
@@ -148,7 +208,15 @@ input[readonly]{opacity:.8}
 
   <button class="btn" style="margin-top:14px" onclick="simpan()">Simpan Data</button>
 </div>
-
+<!-- CUSTOM POPUP -->
+<div id="customPopup" style="display:none;">
+  <div class="popup-overlay"></div>
+  <div class="popup-card">
+    <h3 id="popupTitle">Info</h3>
+    <p id="popupMessage"></p>
+    <button id="popupOk">OK</button>
+  </div>
+</div>
 <script>
 /* THEME SYNC */
 const THEME_KEY="app-theme";
@@ -174,7 +242,7 @@ firebase.auth().onAuthStateChanged(async user=>{
   if(!doc.exists) doc=await db.collection("agens").doc(user.uid).get();
 
   if(!doc.exists){
-    alert("Data user tidak ditemukan");
+    showPopup("Data user tidak ditemukan","Error");
     return;
   }
 
@@ -187,7 +255,7 @@ firebase.auth().onAuthStateChanged(async user=>{
 /* AMBIL LOKASI */
 function ambilLokasi(){
   if(!navigator.geolocation){
-    alert("Browser tidak mendukung GPS");
+    showPopup("Browser tidak mendukung GPS","Error");
     return;
   }
 
@@ -202,7 +270,7 @@ function ambilLokasi(){
       btnLokasi.innerText = "📍 Lokasi Tersimpan";
     },
     err=>{
-      alert("Gagal mengambil lokasi. Pastikan izin lokasi diaktifkan.");
+      showPopup("Gagal mengambil lokasi. Aktifkan izin GPS dulu.","Error");
       console.error(err);
     }
   );
@@ -211,11 +279,11 @@ function ambilLokasi(){
 /* SIMPAN DATA */
 function simpan(){
   if(!whatsapp.value.trim() || !alamat.value.trim()){
-    alert("WhatsApp & alamat wajib diisi");
+    showPopup("WhatsApp & alamat wajib diisi","Peringatan");
     return;
   }
   if(!lokasi){
-    alert("Klik tombol 'Share Lokasi' dulu");
+    showPopup("Klik tombol Share Lokasi dulu ya","Peringatan");
     return;
   }
 
@@ -225,10 +293,11 @@ function simpan(){
     lokasi: lokasi,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   }).then(()=>{
-    alert("Data berhasil disimpan!");
+    showPopup("Data berhasil disimpan!","Sukses",()=>{
     location.href="helper.html";
+  });
   }).catch(err=>{
-    alert("Gagal menyimpan data");
+    showPopup("Gagal menyimpan data. Coba lagi.","Error");
     console.error(err);
   });
 }
@@ -239,6 +308,19 @@ const alamat = document.getElementById("alamat");
 const nama = document.getElementById("nama");
 const email = document.getElementById("email");
 const btnLokasi = document.getElementById("btnLokasi");
+/* ===== CUSTOM POPUP FUNCTION ===== */
+function showPopup(msg, title="Info", callback=null){
+  const popup = document.getElementById("customPopup");
+  document.getElementById("popupTitle").innerText = title;
+  document.getElementById("popupMessage").innerText = msg;
+
+  popup.style.display="flex";
+
+  document.getElementById("popupOk").onclick = () => {
+    popup.style.display="none";
+    if(callback) callback();
+  };
+}
 </script>
 
 </body>
