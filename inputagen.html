@@ -518,8 +518,87 @@
       var(--glow);
     filter: brightness(1.05);
   }
-  .hist{
-    padding: 20px;
+  /* ===== Container history ===== */
+  .hist {
+    margin-top: 16px;
+    max-height: 400px;       /* tinggi maksimum scrollable */
+    overflow-y: auto;        /* scroll vertikal */
+    padding: 8px;
+    border-radius: var(--radius);
+    background: var(--card);
+    box-shadow: 0 2px 8px rgba(0,0,0,.05), var(--glow);
+  }
+  
+  /* ===== Setiap item riwayat ===== */
+  .history-items > div {
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    border-radius: var(--radius);
+    background: var(--card);
+    border: 1px solid var(--border);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background .25s ease, color .25s ease;
+  }
+  
+  /* Hover effect */
+  .history-items > div:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08), var(--glow);
+  }
+  
+  /* Tanggal */
+  .history-items > div > div:first-child {
+    font-weight: 700;
+    color: var(--primary);       /* pakai warna primary */
+    margin-bottom: 4px;
+    font-size: 14px;
+  }
+  
+  /* Nama member */
+  .history-items > div > div:nth-child(2) {
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  
+  /* Ambil */
+  .history-items > div > div:nth-child(3) {
+    font-size: 13px;
+    color: var(--muted);
+  }
+  
+  /* Notifikasi kosong / error */
+  .history-items .success, .history-items .error {
+    text-align: center;
+    padding: 12px;
+    color: #fff;
+    border-radius: var(--radius);
+  }
+  
+  .history-items .success {
+    background-color: #4caf50; /* tetap hijau */
+  }
+  
+  .history-items .error {
+    background-color: #f44336; /* tetap merah */
+  }
+  
+  /* Scrollbar (opsional biar enak diliat) */
+  .hist::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .hist::-webkit-scrollbar-track {
+    background: var(--card);
+    border-radius: var(--radius);
+  }
+  
+  .hist::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: var(--radius);
+  }
+  
+  .hist::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
   }
 </style>
 </head>
@@ -578,7 +657,7 @@
   </div>
 
 <div class="hist">
-  <div id="historyList"class="card"></div>
+  <div id="historyList" class="history-items"></div>
   </div>
 </div>
 </div>
@@ -823,8 +902,10 @@ async function loadAgen(uid){
   });
 
   // AUTO FILTER (LIVE)
-  document.getElementById("searchNama").addEventListener("input", async () => {
-    await applyFilter(namaID);
+  let debounceTimer;
+  document.getElementById("searchNama").addEventListener("input", () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(()=> applyFilter(namaID), 300);
   });
 
   document.getElementById("dateFilter").addEventListener("change", async () => {
@@ -838,6 +919,23 @@ async function applyFilter(namaID) {
   await loadHistory(namaID, { nama, date });
 }
 
+// ===== Helper untuk parse tanggal =====
+function parseTanggal(tanggal) {
+  if (!tanggal) return null;
+
+  // Firebase Timestamp asli
+  if (tanggal.toDate) return tanggal.toDate();
+
+  // Data cache biasanya {seconds, nanoseconds}
+  if (tanggal.seconds !== undefined) {
+    return new Date(tanggal.seconds * 1000);
+  }
+
+  // Kalau masih string / Date
+  return new Date(tanggal);
+}
+
+// ===== Load History Agen =====
 async function loadHistory(namaID, filter = {}) {
   const historyCard = document.getElementById("historyCard");
   const historyList = document.getElementById("historyList");
@@ -848,12 +946,12 @@ async function loadHistory(namaID, filter = {}) {
   try {
     let dataArr = null;
 
-    // 1. load dari cache jika ada dan belum expired
+    // 1. Load dari cache jika ada dan belum expired
     if(!filter.forceRefresh){
       dataArr = loadFromCache(CACHE_KEY_HISTORY);
     }
 
-    // 2. kalau cache kosong, ambil dari firestore
+    // 2. Kalau cache kosong, ambil dari Firestore
     if(!dataArr){
       const snap = await db.collection("riwayatagen")
         .where("status", "==", namaID)
@@ -867,18 +965,18 @@ async function loadHistory(namaID, filter = {}) {
         dataArr.push(data);
       });
 
-      // simpan ke cache
+      // Simpan ke cache
       saveToCache(CACHE_KEY_HISTORY, dataArr);
     }
 
-    // FILTER NAMA
+    // ===== FILTER NAMA =====
     if (filter.nama) {
       dataArr = dataArr.filter(d =>
         (d.namaLengkap || "").toLowerCase().includes(filter.nama)
       );
     }
 
-    // FILTER TANGGAL (1 tanggal)
+    // ===== FILTER TANGGAL (1 tanggal) =====
     if (filter.date) {
       const target = new Date(filter.date);
       target.setHours(0,0,0,0);
@@ -887,7 +985,7 @@ async function loadHistory(namaID, filter = {}) {
       next.setHours(23,59,59,999);
 
       dataArr = dataArr.filter(d => {
-        const t = d.tanggal ? d.tanggal.toDate() : null;
+        const t = parseTanggal(d.tanggal);
         return t && t >= target && t <= next;
       });
     }
@@ -897,9 +995,12 @@ async function loadHistory(namaID, filter = {}) {
       return;
     }
 
+    // ===== Render HTML =====
     let html = "";
     dataArr.forEach(d => {
-      const tanggal = d.tanggal ? formatTanggal(d.tanggal.toDate()) : "-";
+      const tanggalObj = parseTanggal(d.tanggal);
+      const tanggal = tanggalObj ? formatTanggal(tanggalObj) : "-";
+
       html += `
         <div style="padding:10px; border-bottom:1px solid #eee;">
           <div style="font-weight:700;">${tanggal}</div>
@@ -915,6 +1016,8 @@ async function loadHistory(namaID, filter = {}) {
     historyList.innerHTML = `<div class="error">Error: ${err.message}</div>`;
   }
 }
+
+// ===== Format Tanggal ke ID =====
 function formatTanggal(date) {
   const fmt = new Intl.DateTimeFormat("id-ID", {
     weekday: "long",
@@ -922,7 +1025,7 @@ function formatTanggal(date) {
     month: "long"
   });
   const full = fmt.format(date);
-  return full.replace(/ \d{4}$/, "");
+  return full.replace(/ \d{4}$/, ""); // hapus tahun jika ingin
 }
 
 function showMsg(text, type){
